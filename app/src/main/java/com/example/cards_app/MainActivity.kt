@@ -4,10 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu // Example icon
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -19,6 +23,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.cards_app.ui.theme.Cards_appTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,6 +31,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val cards = mutableListOf<Card>(
+            Card(1, "Card 1", "Name of Card 1"),
+            Card(2, "Card 2", "Name of Card 2"),
+            Card(3, "Card 3", "Name of Card 3"),
+        )
+
         setContent {
             Cards_appTheme {
                 Scaffold(
@@ -34,10 +46,21 @@ class MainActivity : ComponentActivity() {
                         MyTopAppBar(title = "Cards App")
                     }
                 ) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    Column(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .fillMaxSize()
+                    ) {
+                        Greeting(
+                            name = "Android",
+                        )
+                        LazyColumn {
+                            items(cards){
+                                Cards(it)
+                            }
+                        }
+                    }
+
                 }
             }
         }
@@ -51,12 +74,10 @@ fun MyTopAppBar(title: String, modifier: Modifier = Modifier) {
         title = { Text(text = title) },
         modifier = modifier,
         navigationIcon = {
-            IconButton(onClick = { /* TODO: Handle navigation icon click */ }) {
-                Icon(
-                    imageVector = Icons.Filled.Menu,
-                    contentDescription = "Menu"
-                )
-            }
+            Icon(
+                imageVector = Icons.Filled.Menu,
+                contentDescription = "Menu"
+            )
         },
         actions = {
             // Example action item:
@@ -79,6 +100,21 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         text = "Hello $name!",
         modifier = modifier
     )
+}
+
+@Composable
+fun Cards(card: Card) {
+    Card(
+        modifier = Modifier.padding(7.dp).fillMaxSize()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = card.name)
+            Text(text = card.nameOfCard)
+            Text(text = card.number.toString())
+        }
+    }
 }
 
 @Preview(showBackground = true)
