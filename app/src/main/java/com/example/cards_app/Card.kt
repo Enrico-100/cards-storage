@@ -4,4 +4,5 @@ data class Card(
     val number: Int,
     val name: String,
     val nameOfCard: String,
+    val picture: Int,
 )

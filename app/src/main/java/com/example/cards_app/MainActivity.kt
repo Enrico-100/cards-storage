@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,7 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.cards_app.ui.theme.Cards_appTheme
@@ -41,10 +41,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val cards = mutableListOf<Card>(
-            Card(1, "Card 1", "Name of Card 1"),
-            Card(2, "Card 2", "Name of Card 2"),
-            Card(3, "Card 3", "Name of Card 3"),
+        val cards = mutableListOf(
+            Card(1, "Card 1", "Name of Card 1", R.drawable.num_1),
+            Card(2, "Card 2", "Name of Card 2", R.drawable.num_2),
+            Card(3, "Card 3", "Name of Card 3", R.drawable.num_3),
         )
 
         setContent {
@@ -139,14 +139,29 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Composable
 fun Cards(card: Card) {
     Card(
-        modifier = Modifier.padding(7.dp).fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(7.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(text = card.name)
-            Text(text = card.nameOfCard)
-            Text(text = card.number.toString())
+        Column {
+            Text(
+                text = card.name,
+                modifier = Modifier.padding(start = 16.dp)
+                    .padding(top = 8.dp)
+            )
+            Text(
+                text = card.nameOfCard,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+            Text(
+                text = card.number.toString(),
+                modifier = Modifier.padding(start = 16.dp)
+            )
+            Image(
+                painter = painterResource(id = card.picture),
+                contentDescription = "image of number "+card.number.toString(),
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 }
