@@ -1,7 +1,6 @@
 package com.example.cards_app
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,15 +27,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.cards_app.ui.theme.Cards_appTheme
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -51,27 +52,74 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
+            var numberOfScreen by remember { mutableIntStateOf(0) }
+
+            val dropdownMenuItems: List<DropdownAction> = listOf(
+                DropdownAction("Action 1") { numberOfScreen = 1 },
+                DropdownAction("Action 2") { numberOfScreen = 2 },
+                DropdownAction("Action 3") { numberOfScreen = 3 }
+            )
             Cards_appTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
-                        MyTopAppBar(title = "Cards App")
+                        MyTopAppBar(title = "Cards App", dropdownMenuItems = dropdownMenuItems, onTitleClick = { numberOfScreen = 0 })
                     }
                 ) { innerPadding ->
-                    Column(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .fillMaxSize()
-                    ) {
-                        Greeting(
-                            name = "Android",
-                        )
-                        LazyColumn {
-                            items(cards){
-                                Cards(it)
+                    when (numberOfScreen) {
+                        0 -> {
+                            Column(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize()
+                            ) {
+                                Greeting(
+                                    name = "Android",
+                                )
+                                LazyColumn {
+                                    items(cards){
+                                        Cards(it)
+                                    }
+                                }
                             }
                         }
+                        1 -> {
+                            Column(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize()
+                            ) {
+                                Greeting(
+                                    name = "Screen 1",
+                                )
+                            }
+                        }
+                        2 -> {
+                            Column(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize()
+                            ) {
+                                Greeting(
+                                    name = "Screen 2",
+                                )
+                            }
+                        }
+                        3 -> {
+                            Column(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize()
+                            ) {
+                                Greeting(
+                                    name = "Screen 3",
+                                )
+                            }
+                        }
+
                     }
+
+
 
                 }
             }
@@ -81,18 +129,12 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyTopAppBar(title: String, modifier: Modifier = Modifier) {
+fun MyTopAppBar(title: String, modifier: Modifier = Modifier, dropdownMenuItems: List<DropdownAction> = listOf(), onTitleClick: () -> Unit = {}) {
     var showDropdownMenu by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val dropdownMenuItems: List<DropdownAction> = listOf(
-        DropdownAction("Action 1") { Toast.makeText(context, "Action 1 clicked", Toast.LENGTH_SHORT).show() },
-        DropdownAction("Action 2") { Toast.makeText(context, "Action 2 clicked", Toast.LENGTH_SHORT).show() },
-        DropdownAction("Action 3") { Toast.makeText(context, "Action 3 clicked", Toast.LENGTH_SHORT).show() }
-    )
     TopAppBar(
         title = { Text(text = title) },
         modifier = modifier.clickable(
-            onClick = { showDropdownMenu = !showDropdownMenu }
+            onClick = { onTitleClick() }
         ),
         navigationIcon = {
             Box {
@@ -108,11 +150,9 @@ fun MyTopAppBar(title: String, modifier: Modifier = Modifier) {
                     expanded = showDropdownMenu,
                     onDismissRequest = { showDropdownMenu = false },
                 ) {
-//                    val dropdownMenuItems = listOf("1", "2", "3")
                     dropdownMenuItems.forEach { actionItem ->
                         DropdownMenuItem(
                             text = { Text(actionItem.title) },
-//                            text = { Text(actionItem) },
                             onClick = {
                                 actionItem.onClick()
                                 showDropdownMenu = false
