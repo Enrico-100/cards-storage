@@ -1,10 +1,12 @@
 package com.example.cards_app
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -80,10 +83,17 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyTopAppBar(title: String, modifier: Modifier = Modifier) {
     var showDropdownMenu by remember { mutableStateOf(false) }
-    //val dropdownMenuItems: List<DropdownAction> = emptyList(): List<DropdownAction>
+    val context = LocalContext.current
+    val dropdownMenuItems: List<DropdownAction> = listOf(
+        DropdownAction("Action 1") { Toast.makeText(context, "Action 1 clicked", Toast.LENGTH_SHORT).show() },
+        DropdownAction("Action 2") { Toast.makeText(context, "Action 2 clicked", Toast.LENGTH_SHORT).show() },
+        DropdownAction("Action 3") { Toast.makeText(context, "Action 3 clicked", Toast.LENGTH_SHORT).show() }
+    )
     TopAppBar(
         title = { Text(text = title) },
-        modifier = modifier,
+        modifier = modifier.clickable(
+            onClick = { showDropdownMenu = !showDropdownMenu }
+        ),
         navigationIcon = {
             Box {
                 IconButton(
@@ -98,13 +108,13 @@ fun MyTopAppBar(title: String, modifier: Modifier = Modifier) {
                     expanded = showDropdownMenu,
                     onDismissRequest = { showDropdownMenu = false },
                 ) {
-                    val dropdownMenuItems = listOf("1", "2", "3")
+//                    val dropdownMenuItems = listOf("1", "2", "3")
                     dropdownMenuItems.forEach { actionItem ->
                         DropdownMenuItem(
-                            //text = { Text(actionItem.title) },
-                            text = { Text(actionItem) },
+                            text = { Text(actionItem.title) },
+//                            text = { Text(actionItem) },
                             onClick = {
-                                //actionItem.onClick()
+                                actionItem.onClick()
                                 showDropdownMenu = false
                             }
                         )
