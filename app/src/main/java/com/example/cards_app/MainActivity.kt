@@ -1,14 +1,16 @@
 package com.example.cards_app
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -32,32 +34,32 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.cards_app.ui.theme.Cards_appTheme
+import coil.compose.AsyncImage
+import java.io.File
 
 
-
+val cards = mutableListOf(
+    Card(1, "Card 1", "Name of Card 1", R.drawable.num_1.toString()),
+    Card(2, "Card 2", "Name of Card 2", null),
+    Card(3, "Card 3", "Name of Card 3", R.drawable.num_3.toString()),
+)
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val cards = mutableListOf(
-            Card(1, "Card 1", "Name of Card 1", R.drawable.num_1),
-            Card(2, "Card 2", "Name of Card 2", R.drawable.num_2),
-            Card(3, "Card 3", "Name of Card 3", R.drawable.num_3),
-        )
-
         setContent {
             var numberOfScreen by remember { mutableIntStateOf(0) }
 
             val dropdownMenuItems: List<DropdownAction> = listOf(
+                DropdownAction("Home") { numberOfScreen = 0 },
                 DropdownAction("Action 1") { numberOfScreen = 1 },
-                DropdownAction("Action 2") { numberOfScreen = 2 },
-                DropdownAction("Action 3") { numberOfScreen = 3 }
+                DropdownAction("Action 2") { numberOfScreen = 2 }
             )
             Cards_appTheme {
                 Scaffold(
@@ -92,6 +94,9 @@ class MainActivity : ComponentActivity() {
                                 Greeting(
                                     name = "Screen 1",
                                 )
+                                AddCard().MyAddCard(cards, onButtonClick = {
+                                    numberOfScreen = 0
+                                })
                             }
                         }
                         2 -> {
@@ -102,17 +107,6 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 Greeting(
                                     name = "Screen 2",
-                                )
-                            }
-                        }
-                        3 -> {
-                            Column(
-                                modifier = Modifier
-                                    .padding(innerPadding)
-                                    .fillMaxSize()
-                            ) {
-                                Greeting(
-                                    name = "Screen 3",
                                 )
                             }
                         }
@@ -163,12 +157,6 @@ fun MyTopAppBar(title: String, modifier: Modifier = Modifier, dropdownMenuItems:
             }
 
         },
-        actions = {
-            // Example action item:
-            // IconButton(onClick = { /* TODO: Handle search icon click */ }) {
-            //     Icon(imageVector = Icons.Filled.Search, contentDescription = "Search")
-            // }
-        },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -196,7 +184,8 @@ fun Cards(card: Card) {
         Column {
             Text(
                 text = card.name,
-                modifier = Modifier.padding(start = 16.dp)
+                modifier = Modifier
+                    .padding(start = 16.dp)
                     .padding(top = 8.dp)
             )
             Text(
@@ -207,11 +196,30 @@ fun Cards(card: Card) {
                 text = card.number.toString(),
                 modifier = Modifier.padding(start = 16.dp)
             )
-            Image(
-                painter = painterResource(id = card.picture),
-                contentDescription = "image of number "+card.number.toString(),
-                modifier = Modifier.fillMaxSize()
-            )
+            // Display the generated barcode image if the path exists
+            if (card.picture != null) {
+                Log.d("DisplayImage", "Attempting to load image from: ${card.picture}")
+                AsyncImage(
+                    model = File(card.picture), // <<<< Use Coil's AsyncImage
+                    // Pass the File object from the path
+                    contentDescription = "Barcode for ${card.nameOfCard}",
+                    modifier = Modifier
+                        .fillMaxWidth() // Let the image take available width
+                        .height(100.dp) // Set a specific height for the barcode
+                        .padding(vertical = 8.dp),
+                    contentScale = ContentScale.FillWidth // Scale the image to fit within bounds
+                    // while maintaining aspect ratio.
+                    // You might also use ContentScale.FillWidth
+                )
+            } else {
+                // Optional: Show a placeholder or message if no barcode image
+                Text(
+                    text = "No barcode image available.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 16.dp),
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }
