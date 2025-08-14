@@ -40,7 +40,7 @@ import java.io.IOException
 class AddCard {
     @Composable
     fun MyAddCard(
-        cards: MutableList<Card>,
+        viewModel: MainViewModel,
         onButtonClick: () -> Unit = {}
 
     ) {
@@ -96,7 +96,7 @@ class AddCard {
                     savePath.value = saveBitmapToFile(context = context, bitmap.value!!, "$nameOfCard-$name")
                     val card = Card(number, name, nameOfCard, savePath.value.toString())
                     onButtonClick()
-                    cards.add(card)
+                    viewModel.addCardAndSave(card)
                 },
                 modifier = Modifier.padding(top = 16.dp)
             ) {

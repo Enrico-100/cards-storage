@@ -5,12 +5,12 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,13 +43,15 @@ import coil.compose.AsyncImage
 import java.io.File
 
 
-val cards = mutableListOf(
-    Card(1, "Card 1", "Name of Card 1", R.drawable.num_1.toString()),
-    Card(2, "Card 2", "Name of Card 2", null),
-    Card(3, "Card 3", "Name of Card 3", R.drawable.num_3.toString()),
-)
+
+//val cards = mutableListOf(
+//    Card(1, "Card 1", "Name of Card 1", R.drawable.num_1.toString()),
+//    Card(2, "Card 2", "Name of Card 2", null),
+//    Card(3, "Card 3", "Name of Card 3", R.drawable.num_3.toString()),
+//)
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
+    private val viewModel: MainViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -62,6 +65,7 @@ class MainActivity : ComponentActivity() {
                 DropdownAction("Action 2") { numberOfScreen = 2 }
             )
             Cards_appTheme {
+                val cards by viewModel.cards.collectAsState()
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
@@ -94,7 +98,7 @@ class MainActivity : ComponentActivity() {
                                 Greeting(
                                     name = "Screen 1",
                                 )
-                                AddCard().MyAddCard(cards, onButtonClick = {
+                                AddCard().MyAddCard(viewModel = viewModel, onButtonClick = {
                                     numberOfScreen = 0
                                 })
                             }
@@ -205,7 +209,6 @@ fun Cards(card: Card) {
                     contentDescription = "Barcode for ${card.nameOfCard}",
                     modifier = Modifier
                         .fillMaxWidth() // Let the image take available width
-                        .height(100.dp) // Set a specific height for the barcode
                         .padding(vertical = 8.dp),
                     contentScale = ContentScale.FillWidth // Scale the image to fit within bounds
                     // while maintaining aspect ratio.
