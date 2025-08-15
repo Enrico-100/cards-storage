@@ -27,15 +27,15 @@ class AppDataStore(private val context: Context) {
                     Json.decodeFromString<List<Card>>(jsonString)
                 }catch (e: Exception){
                     Log.e("AppDataStore", "Error decoding cards from JSON: ${e.message}")
-                    emptyList<Card>()
+                    emptyList()
                 }
             } else {
-                emptyList<Card>()
+                emptyList()
             }
         }
         .catch { exception ->
             Log.e("AppDataStore", "Error reading cards from DataStore: ${exception.message}")
-            emit(emptyList<Card>())
+            emit(emptyList())
         }
     suspend fun saveCards(cards: List<Card>) {
         try {

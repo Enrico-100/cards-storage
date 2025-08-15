@@ -24,9 +24,4 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
             dataStore.saveCards(currentCards)
         }
     }
-    fun persistCurrentCards() { // Example if you need to save explicitly at some point
-        viewModelScope.launch {
-            dataStore.saveCards(cards.value)
-        }
-    }
 }

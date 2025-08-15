@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu // Example icon
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.cards_app.ui.theme.Cards_appTheme
@@ -43,12 +44,6 @@ import coil.compose.AsyncImage
 import java.io.File
 
 
-
-//val cards = mutableListOf(
-//    Card(1, "Card 1", "Name of Card 1", R.drawable.num_1.toString()),
-//    Card(2, "Card 2", "Name of Card 2", null),
-//    Card(3, "Card 3", "Name of Card 3", R.drawable.num_3.toString()),
-//)
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -60,9 +55,9 @@ class MainActivity : ComponentActivity() {
             var numberOfScreen by remember { mutableIntStateOf(0) }
 
             val dropdownMenuItems: List<DropdownAction> = listOf(
-                DropdownAction("Home") { numberOfScreen = 0 },
-                DropdownAction("Action 1") { numberOfScreen = 1 },
-                DropdownAction("Action 2") { numberOfScreen = 2 }
+                DropdownAction("Your cards", onClick = { numberOfScreen = 0 }, icon = R.drawable.outline_account_balance_wallet_24),
+                DropdownAction("Add card", onClick = { numberOfScreen = 1 }, icon = R.drawable.outline_add_card_24),
+                DropdownAction("Account", onClick = { numberOfScreen = 2 }, icon = R.drawable.outline_account_circle_24)
             )
             Cards_appTheme {
                 val cards by viewModel.cards.collectAsState()
@@ -150,7 +145,16 @@ fun MyTopAppBar(title: String, modifier: Modifier = Modifier, dropdownMenuItems:
                 ) {
                     dropdownMenuItems.forEach { actionItem ->
                         DropdownMenuItem(
-                            text = { Text(actionItem.title) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = actionItem.icon),
+                                    contentDescription = actionItem.title
+                                )
+                            },
+                            text = { Text(
+                                actionItem.title,
+                                fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                            ) },
                             onClick = {
                                 actionItem.onClick()
                                 showDropdownMenu = false

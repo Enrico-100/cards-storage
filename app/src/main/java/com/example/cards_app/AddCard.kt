@@ -7,12 +7,10 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Environment
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -23,7 +21,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
@@ -83,13 +80,6 @@ class AddCard {
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
-            bitmap.value?.asImageBitmap()?.let { it ->
-                Image(
-                    bitmap = it,
-                    contentDescription = "Generate BarCode Image",
-                    modifier = Modifier.size(250.dp)
-                )
-            }
             Button(
                 onClick = {
                     bitmap.value = generateBarCode(number.toString())
