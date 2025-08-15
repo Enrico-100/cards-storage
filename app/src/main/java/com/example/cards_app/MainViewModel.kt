@@ -29,7 +29,7 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
             dataStore.saveCards(cards.value)
         }
     }
-    fun deleteCardByNumber(number: Int) {
+    fun deleteCardByNumber(number: Long) {
         viewModelScope.launch {
             dataStore.deleteCardByNumber(number)
         }

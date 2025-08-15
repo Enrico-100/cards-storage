@@ -51,7 +51,7 @@ class AppDataStore(private val context: Context) {
         }
 
     }
-    suspend fun deleteCardByNumber(number: Int) {
+    suspend fun deleteCardByNumber(number: Long) {
         val currentCards = cardsFlow.first().toMutableList()//gets currentList<Card>
         val initialSize = currentCards.size //gets initial size
         currentCards.removeAll { it.number == number } //removes card with number

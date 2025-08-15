@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,11 +24,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import java.io.File
+import androidx.core.graphics.toColorInt
 
 class MyCards {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -64,7 +67,10 @@ class MyCards {
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(7.dp)
+                .padding(7.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(card.color.toColorInt())
+                )
         ) {
             Column(
                 modifier = Modifier.padding(start = 16.dp)
@@ -108,7 +114,8 @@ class MyCards {
                         contentDescription = "Barcode for ${card.nameOfCard}",
                         modifier = Modifier
                             .fillMaxWidth() // Let the image take available width
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = 8.dp)
+                            .padding(end = 16.dp),
                         contentScale = ContentScale.FillWidth // Scale the image to fit within bounds
                         // while maintaining aspect ratio.
                         // You might also use ContentScale.FillWidth

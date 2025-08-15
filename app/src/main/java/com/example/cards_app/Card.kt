@@ -4,8 +4,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Card(
-    val number: Int,
+    val number: Long,
     val name: String,
     val nameOfCard: String,
-    val picture: String?
+    val picture: String?,
+    val color: String
 )

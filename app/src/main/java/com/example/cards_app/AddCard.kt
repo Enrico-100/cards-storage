@@ -2,36 +2,37 @@ package com.example.cards_app
 
 
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Color
-import android.os.Environment
-import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.createBitmap
-import androidx.core.graphics.set
 
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.MultiFormatWriter
-import com.google.zxing.WriterException
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 
 
 class AddCard {
@@ -44,9 +45,19 @@ class AddCard {
         val context = LocalContext.current
         val bitmap = remember { mutableStateOf<Bitmap?>(null) }
         val savePath = remember { mutableStateOf<String?>(null) }
-        var number by remember { mutableIntStateOf(0) }
+        var number by remember { mutableLongStateOf(0) }
         var name by remember { mutableStateOf("") }
         var nameOfCard by remember { mutableStateOf("") }
+        val colors = listOf(
+            Color.Red,
+            Color.Green,
+            Color.Blue,
+            Color.Yellow,
+            Color.Magenta,
+            Color.Cyan,
+            Color.Gray,
+        )
+        var color by remember { mutableStateOf(colors.first()) }
 
         Column(
             modifier = Modifier
@@ -56,7 +67,7 @@ class AddCard {
             OutlinedTextField(
                 value = number.toString(),
                 onValueChange = {
-                    number = it.toIntOrNull() ?: 0
+                    number = it.toLong() // Convert to Long
                 },
                 label = { Text("Number") },
                 modifier = Modifier.fillMaxWidth(),
@@ -80,11 +91,29 @@ class AddCard {
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
+            LazyRow(
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
+                items(colors.size) {
+                    val currentColor = colors[it]
+                    val isSelected = (color == currentColor)
+                    ColorCircle(
+                        color = colors[it],
+                        isSelected =  isSelected,
+                        onClick = {
+                            color = currentColor
+                        },
+
+                    )
+
+                }
+            }
             Button(
                 onClick = {
-                    bitmap.value = generateBarCode(number.toString())
-                    savePath.value = saveBitmapToFile(context = context, bitmap.value!!, "$nameOfCard-$name")
-                    val card = Card(number, name, nameOfCard, savePath.value.toString())
+                    bitmap.value = BarcodeGeneratorAndSaver().generateBarCode(number.toString())
+                    savePath.value = BarcodeGeneratorAndSaver().saveBitmapToFile(context = context, bitmap.value!!, "$nameOfCard-$name")
+                    val colorString = color.toHexString()
+                    val card = Card(number, name, nameOfCard, savePath.value.toString(), colorString)
                     onButtonClick()
                     viewModel.addCardAndSave(card)
                 },
@@ -97,67 +126,40 @@ class AddCard {
 
     }
 }
-fun generateBarCode(text: String): Bitmap {
-    val width = 1000
-    val height = 300
-    val bitmap = createBitmap(width, height, Bitmap.Config.ARGB_8888)
-    val codeWriter = MultiFormatWriter()
-    try {
-        val bitMatrix = codeWriter.encode(
-            text,
-            BarcodeFormat.CODE_128,
-            width,
-            height
-        )
-        for (x in 0 until width) {
-            for (y in 0 until height) {
-                val color = if (bitMatrix[x, y]) Color.BLACK else Color.TRANSPARENT
-                bitmap[x, y] = color
+
+
+@Composable
+fun ColorCircle(
+    color : Color,
+    isSelected: Boolean,
+    onClick: () -> Unit = {},
+){
+    Box(
+        modifier = Modifier
+            .padding(4.dp)
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(color = color),
+        contentAlignment = Alignment.Center
+    ) {
+        IconButton(
+            onClick = {onClick()}
+        ) {
+            if (isSelected) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = "Selected",
+                    tint = if (color.luminance() > 0.5) Color.Black else Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
-    } catch (e: WriterException) {
-        Log.d("TAG", "generateBarCode: ${e.message}")
     }
-    return bitmap
 }
-fun saveBitmapToFile(
-    context: Context,
-    bitmap: Bitmap,
-    desiredFileName: String
-): String? {
-    val imageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-    if (imageDir == null) {
-        Log.e("SaveBitmap", "External files directory not available.")
-        return null
-    }
-    if (!imageDir.exists()) {
-        if (!imageDir.mkdirs()) {
-            Log.e("SaveBitmap", "Failed to create directory: ${imageDir.absolutePath}")
-            return null // Failed to create directory
-        }
-    }
-
-    val finalFileName = "$desiredFileName.png"
-    val imageFile = File(imageDir, finalFileName)
-    var fos: FileOutputStream? = null
-    try {
-        fos = FileOutputStream(imageFile)
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
-        Log.i("SaveBitmap", "Image saved successfully: ${imageFile.absolutePath}")
-        return imageFile.absolutePath
-    } catch (e: IOException) {
-        Log.e("SaveBitmap", "Error saving image: ${e.message}", e)
-    } catch (e: Exception) { // Catch any other unexpected errors during saving
-        Log.e("SaveBitmap", "Unexpected error saving image: ${e.message}", e)
-    } finally {
-        try {
-            fos?.close()
-        } catch (e: IOException) {
-            Log.e("SaveBitmap", "Error closing FileOutputStream: ${e.message}", e)
-        }
-    }
-    if (imageFile.exists()) {
-        imageFile.delete()
-    }
-    return null
+fun Color.toHexString(): String{
+    val alpha = (this.alpha * 255).toInt()
+    val red = (this.red * 255).toInt()
+    val green = (this.green * 255).toInt()
+    val blue = (this.blue * 255).toInt()
+    return String.format("#%02X%02X%02X%02X", alpha, red, green, blue)
 }
