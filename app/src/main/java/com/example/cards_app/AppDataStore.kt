@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
@@ -49,6 +50,17 @@ class AppDataStore(private val context: Context) {
 
         }
 
+    }
+    suspend fun deleteCardByNumber(number: Int) {
+        val currentCards = cardsFlow.first().toMutableList()//gets currentList<Card>
+        val initialSize = currentCards.size //gets initial size
+        currentCards.removeAll { it.number == number } //removes card with number
+        if (currentCards.size < initialSize) {
+            saveCards(currentCards)
+            Log.d("AppDataStore", "Card with number $number deleted successfully.")
+        }else{
+            Log.d("AppDataStore", "Card with number $number not found for deletion.")
+        }
     }
 
 }

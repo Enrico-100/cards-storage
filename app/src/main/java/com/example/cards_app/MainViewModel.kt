@@ -24,4 +24,15 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
             dataStore.saveCards(currentCards)
         }
     }
+    fun persistCurrentCards() {
+        viewModelScope.launch {
+            dataStore.saveCards(cards.value)
+        }
+    }
+    fun deleteCardByNumber(number: Int) {
+        viewModelScope.launch {
+            dataStore.deleteCardByNumber(number)
+        }
+    }
+
 }

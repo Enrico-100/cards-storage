@@ -1,7 +1,6 @@
 package com.example.cards_app
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,13 +9,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,14 +32,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.example.cards_app.ui.theme.Cards_appTheme
-import coil.compose.AsyncImage
-import java.io.File
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -61,6 +53,7 @@ class MainActivity : ComponentActivity() {
             )
             Cards_appTheme {
                 val cards by viewModel.cards.collectAsState()
+                val myCards = MyCards()
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
@@ -77,10 +70,16 @@ class MainActivity : ComponentActivity() {
                                 Greeting(
                                     name = "Android",
                                 )
-                                LazyColumn {
-                                    items(cards){
-                                        Cards(it)
+                                if (cards.isNotEmpty()) {
+                                    LazyColumn {
+                                        items(cards) {
+                                            myCards.Cards(card = it, viewModel = viewModel)
+                                        }
                                     }
+                                }else {
+                                    myCards.NoCardsYet(
+                                        onCardClick = { numberOfScreen = 1 }
+                                    )
                                 }
                             }
                         }
@@ -122,7 +121,12 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyTopAppBar(title: String, modifier: Modifier = Modifier, dropdownMenuItems: List<DropdownAction> = listOf(), onTitleClick: () -> Unit = {}) {
+fun MyTopAppBar(
+    title: String,
+    modifier: Modifier = Modifier,
+    dropdownMenuItems: List<DropdownAction> = listOf(),
+    onTitleClick: () -> Unit = {}
+) {
     var showDropdownMenu by remember { mutableStateOf(false) }
     TopAppBar(
         title = { Text(text = title) },
@@ -180,55 +184,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         text = "Hello $name!",
         modifier = modifier
     )
-}
-
-@Composable
-fun Cards(card: Card) {
-    Card(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(7.dp)
-    ) {
-        Column {
-            Text(
-                text = card.name,
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .padding(top = 8.dp)
-            )
-            Text(
-                text = card.nameOfCard,
-                modifier = Modifier.padding(start = 16.dp)
-            )
-            Text(
-                text = card.number.toString(),
-                modifier = Modifier.padding(start = 16.dp)
-            )
-            // Display the generated barcode image if the path exists
-            if (card.picture != null) {
-                Log.d("DisplayImage", "Attempting to load image from: ${card.picture}")
-                AsyncImage(
-                    model = File(card.picture), // <<<< Use Coil's AsyncImage
-                    // Pass the File object from the path
-                    contentDescription = "Barcode for ${card.nameOfCard}",
-                    modifier = Modifier
-                        .fillMaxWidth() // Let the image take available width
-                        .padding(vertical = 8.dp),
-                    contentScale = ContentScale.FillWidth // Scale the image to fit within bounds
-                    // while maintaining aspect ratio.
-                    // You might also use ContentScale.FillWidth
-                )
-            } else {
-                // Optional: Show a placeholder or message if no barcode image
-                Text(
-                    text = "No barcode image available.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(start = 16.dp),
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-    }
 }
 
 @Preview(showBackground = true)
