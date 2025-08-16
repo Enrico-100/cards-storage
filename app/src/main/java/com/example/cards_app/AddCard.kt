@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,7 +46,8 @@ class AddCard {
         val context = LocalContext.current
         val bitmap = remember { mutableStateOf<Bitmap?>(null) }
         val savePath = remember { mutableStateOf<String?>(null) }
-        var number by remember { mutableLongStateOf(0) }
+        var number by remember { mutableStateOf("") }
+        var numberLong by remember { mutableLongStateOf(0) }
         var name by remember { mutableStateOf("") }
         var nameOfCard by remember { mutableStateOf("") }
         val colors = listOf(
@@ -58,6 +60,8 @@ class AddCard {
             Color.Gray,
         )
         var color by remember { mutableStateOf(colors.first()) }
+        var validationMessage by remember { mutableStateOf("") }
+        var showValidationMessage by remember { mutableStateOf(false) }
 
         Column(
             modifier = Modifier
@@ -65,9 +69,9 @@ class AddCard {
                 .padding(20.dp)
         ){
             OutlinedTextField(
-                value = number.toString(),
+                value = number,
                 onValueChange = {
-                    number = it.toLong() // Convert to Long
+                    number = it
                 },
                 label = { Text("Number") },
                 modifier = Modifier.fillMaxWidth(),
@@ -110,16 +114,62 @@ class AddCard {
             }
             Button(
                 onClick = {
-                    bitmap.value = BarcodeGeneratorAndSaver().generateBarCode(number.toString())
-                    savePath.value = BarcodeGeneratorAndSaver().saveBitmapToFile(context = context, bitmap.value!!, "$nameOfCard-$name")
                     val colorString = color.toHexString()
-                    val card = Card(number, name, nameOfCard, savePath.value.toString(), colorString)
+                    if (number.isEmpty() || number.toLongOrNull() == null){
+                        validationMessage += "Number cannot be empty or not a valid number.\n"
+                    }
+                    if (name.isEmpty()){
+                        validationMessage += "Name cannot be empty.\n"
+                    }
+                    if (nameOfCard.isEmpty()){
+                        validationMessage += "Name of card cannot be empty.\n"
+                    }
+                    showValidationMessage = validationMessage.isNotEmpty()
+                    if (showValidationMessage) {
+                        return@Button
+                    }
+                    if (validationMessage.isEmpty()){
+                        numberLong = number.toLong()
+                        bitmap.value = BarcodeGeneratorAndSaver().generateBarCode(numberLong.toString())
+                        savePath.value = BarcodeGeneratorAndSaver().saveBitmapToFile(context = context, bitmap.value!!, "$nameOfCard-$name")
+                    }
+                    if (savePath.value == null){
+                        validationMessage += "Failed to save barcode.\n"
+                    }
+                    if(bitmap.value == null) {
+                        validationMessage += "Failed to generate barcode."
+                    }
+                    showValidationMessage = validationMessage.isNotEmpty()
+                    if (showValidationMessage) {
+                        return@Button
+                    }
+                    val card = Card(numberLong, name, nameOfCard, savePath.value.toString(), colorString)
                     onButtonClick()
                     viewModel.addCardAndSave(card)
                 },
                 modifier = Modifier.padding(top = 16.dp)
             ) {
                 Text(text = "Add Card")
+            }
+            if (showValidationMessage) {
+                AlertDialog(
+                    onDismissRequest = {
+                        showValidationMessage = false
+                        validationMessage = ""
+                        },
+                    title = { Text("Validation Error") },
+                    text = { Text(validationMessage) },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showValidationMessage = false
+                                validationMessage = ""
+                            }
+                        ) {
+                            Text("OK")
+                        }
+                    }
+                )
             }
         }
 
