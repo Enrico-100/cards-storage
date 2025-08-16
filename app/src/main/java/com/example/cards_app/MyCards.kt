@@ -148,7 +148,7 @@ class MyCards {
                 onClick = onCardClick
                 )
                 .fillMaxWidth()
-                .padding(horizontal = 7.dp)
+                .padding(7.dp),
         ){
             Row (
                 verticalAlignment = Alignment.CenterVertically

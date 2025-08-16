@@ -62,21 +62,20 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     when (numberOfScreen) {
                         0 -> {
-                            Column(
+                            LazyColumn(
                                 modifier = Modifier
                                     .padding(innerPadding)
                                     .fillMaxSize()
                             ) {
-                                Greeting(
-                                    name = "Android",
-                                )
-                                if (cards.isNotEmpty()) {
-                                    LazyColumn {
-                                        items(cards) {
-                                            myCards.Cards(card = it, viewModel = viewModel)
-                                        }
-                                    }
-                                }else {
+                                item {
+                                    Greeting(
+                                        name = "Android",
+                                    )
+                                }
+                                items(cards) {
+                                    myCards.Cards(card = it, viewModel = viewModel)
+                                }
+                                item {
                                     myCards.NoCardsYet(
                                         onCardClick = { numberOfScreen = 1 }
                                     )
