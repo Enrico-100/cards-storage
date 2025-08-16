@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -75,20 +76,25 @@ class MyCards {
             Column(
                 modifier = Modifier.padding(start = 16.dp)
             ) {
+                val color = Color(card.color.toColorInt())
+                val blackOrWhite = if (color.luminance() > 0.5) Color.Black else Color.White
                 Row {
                     Column {
                         Text(
                             text = card.name,
                             modifier = Modifier.padding(top = 8.dp),
-                            fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                            color = blackOrWhite
                         )
                         Text(
                             text = card.nameOfCard,
-                            fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                            color = blackOrWhite
                         )
                         Text(
                             text = card.number.toString(),
-                            fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                            color = blackOrWhite
                         )
                     }
                     Spacer(
@@ -101,6 +107,7 @@ class MyCards {
                         Icon(
                             imageVector = Icons.Rounded.Delete,
                             contentDescription = "Delete Card",
+                            tint = blackOrWhite
                         )
                     }
                 }
