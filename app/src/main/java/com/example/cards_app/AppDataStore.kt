@@ -51,15 +51,15 @@ class AppDataStore(private val context: Context) {
         }
 
     }
-    suspend fun deleteCardByNumber(number: Long) {
+    suspend fun deleteCardByID(id: String) {
         val currentCards = cardsFlow.first().toMutableList()//gets currentList<Card>
         val initialSize = currentCards.size //gets initial size
-        currentCards.removeAll { it.number == number } //removes card with number
+        currentCards.removeAll { it.id == id } //removes card with id
         if (currentCards.size < initialSize) {
             saveCards(currentCards)
-            Log.d("AppDataStore", "Card with number $number deleted successfully.")
+            Log.d("AppDataStore", "Card with id $id deleted successfully.")
         }else{
-            Log.d("AppDataStore", "Card with number $number not found for deletion.")
+            Log.d("AppDataStore", "Card with id $id not found for deletion.")
         }
     }
 

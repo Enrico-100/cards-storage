@@ -20,18 +20,23 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
     fun addCardAndSave(newCard: Card) {
         viewModelScope.launch {
             val currentCards = cards.value.toMutableList()
-            currentCards.add(newCard)
+            val existingCard = currentCards.indexOfFirst { it.id == newCard.id }
+            if (existingCard != -1) {
+                currentCards[existingCard] = newCard
+            }else{
+                currentCards.add(newCard)
+            }
             dataStore.saveCards(currentCards)
         }
     }
-    fun persistCurrentCards() {
+//    fun persistCurrentCards() {
+//        viewModelScope.launch {
+//            dataStore.saveCards(cards.value)
+//        }
+//    }
+    fun deleteCardByID(id: String) {
         viewModelScope.launch {
-            dataStore.saveCards(cards.value)
-        }
-    }
-    fun deleteCardByNumber(number: Long) {
-        viewModelScope.launch {
-            dataStore.deleteCardByNumber(number)
+            dataStore.deleteCardByID(id)
         }
     }
 

@@ -33,23 +33,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-
+import androidx.core.graphics.toColorInt
+import java.util.UUID
 
 
 class AddCard {
     @Composable
     fun MyAddCard(
         viewModel: MainViewModel,
-        onButtonClick: () -> Unit = {}
-
+        onButtonClick: () -> Unit = {},
+        card: Card? = null
     ) {
         val context = LocalContext.current
+        val id = card?.id ?: UUID.randomUUID().toString()
         val bitmap = remember { mutableStateOf<Bitmap?>(null) }
-        val savePath = remember { mutableStateOf<String?>(null) }
-        var number by remember { mutableStateOf("") }
-        var numberLong by remember { mutableLongStateOf(0) }
-        var name by remember { mutableStateOf("") }
-        var nameOfCard by remember { mutableStateOf("") }
+        val savePath = remember { mutableStateOf(card?.picture) }
+        var number by remember { mutableStateOf(card?.number?.toString() ?: "") }
+        var numberLong by remember { mutableLongStateOf(card?.number ?: 0L) }
+        var name by remember { mutableStateOf(card?.name ?: "") }
+        var nameOfCard by remember { mutableStateOf(card?.nameOfCard ?: "") }
         val colors = listOf(
             Color.Red,
             Color.Green,
@@ -59,7 +61,7 @@ class AddCard {
             Color.Cyan,
             Color.Gray,
         )
-        var color by remember { mutableStateOf(colors.first()) }
+        var color by remember { mutableStateOf( if (card != null) Color(card.color.toColorInt()) else colors.first()) }
         var validationMessage by remember { mutableStateOf("") }
         var showValidationMessage by remember { mutableStateOf(false) }
 
@@ -130,8 +132,9 @@ class AddCard {
                     }
                     if (validationMessage.isEmpty()){
                         numberLong = number.toLong()
+                        savePath.value = null
                         bitmap.value = BarcodeGeneratorAndSaver().generateBarCode(numberLong.toString())
-                        savePath.value = BarcodeGeneratorAndSaver().saveBitmapToFile(context = context, bitmap.value!!, "$nameOfCard-$name")
+                        savePath.value = BarcodeGeneratorAndSaver().saveBitmapToFile(context = context, bitmap.value!!, id)
                     }
                     if (savePath.value == null){
                         validationMessage += "Failed to save barcode.\n"
@@ -143,9 +146,9 @@ class AddCard {
                     if (showValidationMessage) {
                         return@Button
                     }
-                    val card = Card(numberLong, name, nameOfCard, savePath.value.toString(), colorString)
-                    onButtonClick()
+                    val card = Card(id=id,number=numberLong, name=name, nameOfCard=nameOfCard, picture=savePath.value.toString(), color=colorString)
                     viewModel.addCardAndSave(card)
+                    onButtonClick()
                 },
                 modifier = Modifier.padding(top = 16.dp)
             ) {

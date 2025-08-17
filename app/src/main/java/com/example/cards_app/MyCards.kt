@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,9 +39,15 @@ class MyCards {
     @Composable
     fun Cards(
         card: Card,
-        viewModel: MainViewModel
+        viewModel: MainViewModel,
+        onCardClick: () -> Unit = {},
+        onEditClick: () -> Unit = {},
     ) {
         val showDeleteDialog = remember { mutableStateOf(false) }
+        val showEditDialog = remember { mutableStateOf(false) }
+        if (showEditDialog.value) {
+            onEditClick()
+        }
         if (showDeleteDialog.value) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog.value = false },
@@ -49,7 +56,7 @@ class MyCards {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            viewModel.deleteCardByNumber(card.number)
+                            viewModel.deleteCardByID(card.id)
                             showDeleteDialog.value = false
                         }
                     ) {
@@ -68,7 +75,8 @@ class MyCards {
         Card(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(7.dp),
+                .padding(7.dp)
+                .clickable(onClick = onCardClick),
                 colors = CardDefaults.cardColors(
                     containerColor = Color(card.color.toColorInt())
                 )
@@ -100,6 +108,16 @@ class MyCards {
                     Spacer(
                         modifier = Modifier.weight(1f)
                     )
+                    IconButton(
+                        onClick = { showEditDialog.value = true },
+
+                        ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Edit,
+                            contentDescription = "Edit Card",
+                            tint = blackOrWhite
+                        )
+                    }
                     IconButton(
                         onClick = { showDeleteDialog.value = true },
 
@@ -167,6 +185,20 @@ class MyCards {
                     modifier = Modifier.padding(8.dp)
                 )
             }
+        }
+    }
+    @Composable
+    fun ShowCard(
+        card: Card?,
+        viewModel: MainViewModel,
+        onEditClick: () -> Unit
+    ){
+        if (card != null) {
+            Cards(
+                card = card,
+                viewModel = viewModel,
+                onEditClick = onEditClick
+            )
         }
     }
 }

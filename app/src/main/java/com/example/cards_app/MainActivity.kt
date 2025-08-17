@@ -51,6 +51,8 @@ class MainActivity : ComponentActivity() {
                 DropdownAction("Add card", onClick = { numberOfScreen = 1 }, icon = R.drawable.outline_add_card_24),
                 DropdownAction("Account", onClick = { numberOfScreen = 2 }, icon = R.drawable.outline_account_circle_24)
             )
+            var currentCard by remember { mutableStateOf<Card?>(null) }
+            var editState by remember { mutableStateOf(false) }
             Cards_appTheme {
                 val cards by viewModel.cards.collectAsState()
                 val myCards = MyCards()
@@ -73,7 +75,19 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                                 items(cards) {
-                                    myCards.Cards(card = it, viewModel = viewModel)
+                                    myCards.Cards(
+                                        card = it,
+                                        viewModel = viewModel,
+                                        onCardClick = {
+                                            numberOfScreen = 3
+                                            currentCard = it
+                                        },
+                                        onEditClick = {
+                                            numberOfScreen = 1
+                                            currentCard = it
+                                            editState = true
+                                        }
+                                    )
                                 }
                                 item {
                                     myCards.NoCardsYet(
@@ -91,9 +105,14 @@ class MainActivity : ComponentActivity() {
                                 Greeting(
                                     name = "Screen 1",
                                 )
-                                AddCard().MyAddCard(viewModel = viewModel, onButtonClick = {
-                                    numberOfScreen = 0
-                                })
+                                AddCard().MyAddCard(
+                                    viewModel = viewModel,
+                                    onButtonClick = {
+                                        numberOfScreen = 0
+                                        editState = false
+                                    },
+                                    card = if (editState) currentCard else null
+                                )
                             }
                         }
                         2 -> {
@@ -104,6 +123,25 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 Greeting(
                                     name = "Screen 2",
+                                )
+                            }
+                        }
+                        3 -> {
+                            Column(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize()
+                            ) {
+                                Greeting(
+                                    name = "Screen 3",
+                                )
+                                myCards.ShowCard(
+                                    card = currentCard,
+                                    viewModel = viewModel,
+                                    onEditClick = {
+                                        numberOfScreen = 1
+                                        editState = true
+                                    }
                                 )
                             }
                         }
