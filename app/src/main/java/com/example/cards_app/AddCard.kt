@@ -45,13 +45,13 @@ class AddCard {
         card: Card? = null
     ) {
         val context = LocalContext.current
-        val id = card?.id ?: UUID.randomUUID().toString()
-        val bitmap = remember { mutableStateOf<Bitmap?>(null) }
-        val savePath = remember { mutableStateOf(card?.picture) }
-        var number by remember { mutableStateOf(card?.number?.toString() ?: "") }
-        var numberLong by remember { mutableLongStateOf(card?.number ?: 0L) }
-        var name by remember { mutableStateOf(card?.name ?: "") }
-        var nameOfCard by remember { mutableStateOf(card?.nameOfCard ?: "") }
+        val id by remember(card?.id) { mutableStateOf(card?.id ?: UUID.randomUUID().toString()) }
+        val bitmap = remember(card?.id) { mutableStateOf<Bitmap?>(null) }
+        val savePath = remember(card?.id) { mutableStateOf(card?.picture) }
+        var number by remember(card?.id) { mutableStateOf(card?.number?.toString() ?: "") }
+        var numberLong by remember(card?.id) { mutableLongStateOf(card?.number ?: 0L) }
+        var name by remember(card?.id) { mutableStateOf(card?.name ?: "") }
+        var nameOfCard by remember(card?.id) { mutableStateOf(card?.nameOfCard ?: "") }
         val colors = listOf(
             Color.Red,
             Color.Green,
@@ -61,9 +61,9 @@ class AddCard {
             Color.Cyan,
             Color.Gray,
         )
-        var color by remember { mutableStateOf( if (card != null) Color(card.color.toColorInt()) else colors.first()) }
-        var validationMessage by remember { mutableStateOf("") }
-        var showValidationMessage by remember { mutableStateOf(false) }
+        var color by remember(card?.id) { mutableStateOf( if (card != null) Color(card.color.toColorInt()) else colors.first()) }
+        var validationMessage by remember(card?.id) { mutableStateOf("") }
+        var showValidationMessage by remember(card?.id) { mutableStateOf(false) }
 
         Column(
             modifier = Modifier
