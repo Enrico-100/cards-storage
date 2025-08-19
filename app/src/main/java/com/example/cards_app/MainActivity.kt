@@ -45,21 +45,20 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             var numberOfScreen by remember { mutableIntStateOf(0) }
-
-            val dropdownMenuItems: List<DropdownAction> = listOf(
-                DropdownAction("Your cards", onClick = { numberOfScreen = 0 }, icon = R.drawable.outline_account_balance_wallet_24),
-                DropdownAction("Add card", onClick = { numberOfScreen = 1 }, icon = R.drawable.outline_add_card_24),
-                DropdownAction("Account", onClick = { numberOfScreen = 2 }, icon = R.drawable.outline_account_circle_24)
-            )
             var currentCard by remember { mutableStateOf<Card?>(null) }
             var editState by remember { mutableStateOf(false) }
+            val dropdownMenuItems: List<DropdownAction> = listOf(
+                DropdownAction("Your cards", onClick = { numberOfScreen = 0 ; editState = false }, icon = R.drawable.outline_account_balance_wallet_24),
+                DropdownAction("Add card", onClick = { numberOfScreen = 1 ; editState = false }, icon = R.drawable.outline_add_card_24),
+                DropdownAction("Account", onClick = { numberOfScreen = 2 ; editState = false }, icon = R.drawable.outline_account_circle_24)
+            )
             Cards_appTheme {
                 val cards by viewModel.cards.collectAsState()
                 val myCards = MyCards()
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
-                        MyTopAppBar(title = "Cards App", dropdownMenuItems = dropdownMenuItems, onTitleClick = { numberOfScreen = 0 })
+                        MyTopAppBar(title = "Cards App", dropdownMenuItems = dropdownMenuItems, onTitleClick = { numberOfScreen = 0 ; editState = false })
                     }
                 ) { innerPadding ->
                     when (numberOfScreen) {
