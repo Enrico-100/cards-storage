@@ -1,6 +1,7 @@
 package com.example.cards_app
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -76,10 +77,12 @@ class MyCards {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(7.dp)
-                .clickable(onClick = onCardClick),
+                .clickable(onClick = onCardClick)
+                ,
                 colors = CardDefaults.cardColors(
                     containerColor = Color(card.color.toColorInt())
-                )
+                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
         ) {
             Column(
                 modifier = Modifier.padding(start = 16.dp)
