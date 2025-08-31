@@ -90,7 +90,8 @@ class MainActivity : ComponentActivity() {
                                 }
                                 item {
                                     myCards.NoCardsYet(
-                                        onCardClick = { numberOfScreen = 1 }
+                                        onCardClick = { numberOfScreen = 1 },
+                                        text = if (cards.isEmpty()) "No cards yet. Add a card to get started." else "Add a card."
                                     )
                                 }
                             }

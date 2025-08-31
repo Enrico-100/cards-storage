@@ -22,7 +22,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,8 +47,7 @@ class AddCard {
         val id by remember(card?.id) { mutableStateOf(card?.id ?: UUID.randomUUID().toString()) }
         val bitmap = remember(card?.id) { mutableStateOf<Bitmap?>(null) }
         val savePath = remember(card?.id) { mutableStateOf(card?.picture) }
-        var number by remember(card?.id) { mutableStateOf(card?.number?.toString() ?: "") }
-        var numberLong by remember(card?.id) { mutableLongStateOf(card?.number ?: 0L) }
+        var number by remember(card?.id) { mutableStateOf(card?.number ?: "") }
         var name by remember(card?.id) { mutableStateOf(card?.name ?: "") }
         var nameOfCard by remember(card?.id) { mutableStateOf(card?.nameOfCard ?: "") }
         val colors = listOf(
@@ -117,8 +115,8 @@ class AddCard {
             Button(
                 onClick = {
                     val colorString = color.toHexString()
-                    if (number.isEmpty() || number.toLongOrNull() == null){
-                        validationMessage += "Number cannot be empty or not a valid number.\n"
+                    if (number.isEmpty()){
+                        validationMessage += "Number cannot be empty.\n"
                     }
                     if (name.isEmpty()){
                         validationMessage += "Name cannot be empty.\n"
@@ -131,9 +129,8 @@ class AddCard {
                         return@Button
                     }
                     if (validationMessage.isEmpty()){
-                        numberLong = number.toLong()
                         savePath.value = null
-                        bitmap.value = BarcodeGeneratorAndSaver().generateBarCode(numberLong.toString())
+                        bitmap.value = BarcodeGeneratorAndSaver().generateBarCode(number)
                         savePath.value = BarcodeGeneratorAndSaver().saveBitmapToFile(context = context, bitmap.value!!, id)
                     }
                     if (savePath.value == null){
@@ -146,7 +143,7 @@ class AddCard {
                     if (showValidationMessage) {
                         return@Button
                     }
-                    val card = Card(id=id,number=numberLong, name=name, nameOfCard=nameOfCard, picture=savePath.value.toString(), color=colorString)
+                    val card = Card(id=id,number=number, name=name, nameOfCard=nameOfCard, picture=savePath.value.toString(), color=colorString)
                     viewModel.addCardAndSave(card)
                     onButtonClick()
                 },

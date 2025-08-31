@@ -103,7 +103,7 @@ class MyCards {
                             color = blackOrWhite
                         )
                         Text(
-                            text = card.number.toString(),
+                            text = card.number,
                             fontSize = MaterialTheme.typography.bodyLarge.fontSize,
                             color = blackOrWhite
                         )
@@ -161,7 +161,8 @@ class MyCards {
     }
     @Composable
     fun NoCardsYet(
-        onCardClick: () -> Unit = {}
+        onCardClick: () -> Unit = {},
+        text: String
     ){
         Card(
             modifier = Modifier
@@ -175,7 +176,7 @@ class MyCards {
                 verticalAlignment = Alignment.CenterVertically
             ){
                 Text(
-                    text = "No cards yet, click to add card",
+                    text = text,
                     modifier = Modifier.padding(8.dp),
                     fontSize = MaterialTheme.typography.titleLarge.fontSize
                 )
