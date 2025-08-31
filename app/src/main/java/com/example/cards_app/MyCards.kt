@@ -177,11 +177,9 @@ class MyCards {
             ){
                 Text(
                     text = text,
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier.padding(8.dp)
+                        .weight(1f),
                     fontSize = MaterialTheme.typography.titleLarge.fontSize
-                )
-                Spacer(
-                    modifier = Modifier.weight(1f)
                 )
                 Icon(
                     painter = painterResource(id = R.drawable.outline_add_card_24),

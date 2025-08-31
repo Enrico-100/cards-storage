@@ -62,17 +62,12 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     when (numberOfScreen) {
-                        0 -> {
+                        0 -> {//main cards screen
                             LazyColumn(
                                 modifier = Modifier
                                     .padding(innerPadding)
                                     .fillMaxSize()
                             ) {
-                                item {
-                                    Greeting(
-                                        name = "Android",
-                                    )
-                                }
                                 items(cards) {
                                     myCards.Cards(
                                         card = it,
@@ -91,20 +86,17 @@ class MainActivity : ComponentActivity() {
                                 item {
                                     myCards.NoCardsYet(
                                         onCardClick = { numberOfScreen = 1 },
-                                        text = if (cards.isEmpty()) "No cards yet. Add a card to get started." else "Add a card."
+                                        text = if (cards.isEmpty()) "No cards yet, add a card to get started." else "Add a card."
                                     )
                                 }
                             }
                         }
-                        1 -> {
+                        1 -> {//add card / modify card screen
                             Column(
                                 modifier = Modifier
                                     .padding(innerPadding)
                                     .fillMaxSize()
                             ) {
-                                Greeting(
-                                    name = "Screen 1",
-                                )
                                 AddCard().MyAddCard(
                                     viewModel = viewModel,
                                     onButtonClick = {
@@ -115,26 +107,23 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-                        2 -> {
+                        2 -> {//account screen
                             Column(
                                 modifier = Modifier
                                     .padding(innerPadding)
                                     .fillMaxSize()
                             ) {
                                 Greeting(
-                                    name = "Screen 2",
+                                    name = "account screen",//TODO: add account screen
                                 )
                             }
                         }
-                        3 -> {
+                        3 -> {//show one card only screen
                             Column(
                                 modifier = Modifier
                                     .padding(innerPadding)
                                     .fillMaxSize()
                             ) {
-                                Greeting(
-                                    name = "Screen 3",
-                                )
                                 myCards.ShowCard(
                                     card = currentCard,
                                     viewModel = viewModel,
