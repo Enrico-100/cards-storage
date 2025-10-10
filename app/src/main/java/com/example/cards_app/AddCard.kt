@@ -146,7 +146,7 @@ class AddCard {
                 },
                 modifier = Modifier.padding(top = 16.dp)
             ) {
-                Text(text = "Add Card")
+                Text(text = if (card != null) "Update Card" else "Add Card")
             }
             if (showValidationMessage) {
                 AlertDialog(

@@ -2,6 +2,7 @@ package com.example.cards_app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -27,7 +28,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,21 +44,46 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            var numberOfScreen by remember { mutableIntStateOf(0) }
+            var screenStack by remember { mutableStateOf(listOf(0)) }
+            var numberOfScreen = screenStack.last()
             var currentCard by remember { mutableStateOf<Card?>(null) }
             var editState by remember { mutableStateOf(false) }
+            fun navigateTo(screen: Int) {
+                if (screen == numberOfScreen) return
+
+                val newStack = screenStack + screen
+                screenStack = if (newStack.size > 5){
+                    newStack.drop(1)
+                }else{
+                    newStack
+                }
+                numberOfScreen = screenStack.last()
+            }
+            fun navigateBack() {
+                if (screenStack.size > 1){
+                    screenStack = screenStack.dropLast(1)
+                }else if (screenStack.size == 1 && screenStack.last() != 0){
+                    screenStack = listOf(0)
+                }
+                numberOfScreen = screenStack.last()
+            }
             val dropdownMenuItems: List<DropdownAction> = listOf(
-                DropdownAction("Your cards", onClick = { numberOfScreen = 0 ; editState = false }, icon = R.drawable.outline_account_balance_wallet_24),
-                DropdownAction("Add card", onClick = { numberOfScreen = 1 ; editState = false }, icon = R.drawable.outline_add_card_24),
-                DropdownAction("Account", onClick = { numberOfScreen = 2 ; editState = false }, icon = R.drawable.outline_account_circle_24)
+                DropdownAction("Your cards", onClick = { navigateTo(0) ; editState = false }, icon = R.drawable.outline_account_balance_wallet_24),
+                DropdownAction("Add card", onClick = { navigateTo(1) ; editState = false }, icon = R.drawable.outline_add_card_24),
+                DropdownAction("Account", onClick = { navigateTo(2) ; editState = false }, icon = R.drawable.outline_account_circle_24)
             )
+
             Cards_appTheme {
                 val cards by viewModel.cards.collectAsState()
                 val myCards = MyCards()
+
+                BackHandler(screenStack.size > 1 || screenStack.last() != 0) {
+                    navigateBack()
+                }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
-                        MyTopAppBar(title = "Cards App", dropdownMenuItems = dropdownMenuItems, onTitleClick = { numberOfScreen = 0 ; editState = false })
+                        MyTopAppBar(title = "Cards App", dropdownMenuItems = dropdownMenuItems, onTitleClick = { navigateTo(0) ; editState = false })
                     }
                 ) { innerPadding ->
                     when (numberOfScreen) {
@@ -73,11 +98,11 @@ class MainActivity : ComponentActivity() {
                                         card = it,
                                         viewModel = viewModel,
                                         onCardClick = {
-                                            numberOfScreen = 3
+                                            navigateTo(3)
                                             currentCard = it
                                         },
                                         onEditClick = {
-                                            numberOfScreen = 1
+                                            navigateTo(1)
                                             currentCard = it
                                             editState = true
                                         }
@@ -85,7 +110,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 item {
                                     myCards.NoCardsYet(
-                                        onCardClick = { numberOfScreen = 1 },
+                                        onCardClick = { navigateTo(1) },
                                         text = if (cards.isEmpty()) "No cards yet, add a card to get started." else "Add a card."
                                     )
                                 }
@@ -100,7 +125,7 @@ class MainActivity : ComponentActivity() {
                                 AddCard().MyAddCard(
                                     viewModel = viewModel,
                                     onButtonClick = {
-                                        numberOfScreen = 0
+                                        navigateTo(0)
                                         editState = false
                                     },
                                     card = if (editState) currentCard else null
@@ -128,7 +153,7 @@ class MainActivity : ComponentActivity() {
                                     card = currentCard,
                                     viewModel = viewModel,
                                     onEditClick = {
-                                        numberOfScreen = 1
+                                        navigateTo(1)
                                         editState = true
                                     }
                                 )

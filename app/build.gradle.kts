@@ -5,6 +5,10 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 android {
     namespace = "com.example.cards_app"
     compileSdk = 36
@@ -27,10 +31,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
         compose = true
