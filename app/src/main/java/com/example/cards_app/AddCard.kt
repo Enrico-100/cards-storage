@@ -1,7 +1,5 @@
 package com.example.cards_app
 
-
-
 import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -34,7 +32,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import java.util.UUID
-
 
 class AddCard {
     @Composable
