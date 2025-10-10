@@ -33,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.cards_app.ui.theme.Cards_appTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -235,18 +234,4 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         text = "Hello $name!",
         modifier = modifier
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    Cards_appTheme {
-        Scaffold(
-            topBar = {
-                MyTopAppBar(title = "Preview App")
-            }
-        ) { innerPadding ->
-            Greeting("Android", modifier = Modifier.padding(innerPadding))
-        }
-    }
 }
