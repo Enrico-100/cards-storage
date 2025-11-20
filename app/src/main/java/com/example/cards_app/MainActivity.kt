@@ -104,6 +104,9 @@ class MainActivity : ComponentActivity() {
                                             navigateTo(1)
                                             currentCard = it
                                             editState = true
+                                        },
+                                        onDeleteClick = {
+                                            navigateTo(0)
                                         }
                                     )
                                 }
@@ -154,6 +157,9 @@ class MainActivity : ComponentActivity() {
                                     onEditClick = {
                                         navigateTo(1)
                                         editState = true
+                                    },
+                                    onDeleteClick = {
+                                        navigateTo(0)
                                     }
                                 )
                             }

@@ -42,6 +42,7 @@ class MyCards {
         viewModel: MainViewModel,
         onCardClick: () -> Unit = {},
         onEditClick: () -> Unit = {},
+        onDeleteClick: () -> Unit = {}
     ) {
         val showDeleteDialog = remember { mutableStateOf(false) }
         val showEditDialog = remember { mutableStateOf(false) }
@@ -58,6 +59,7 @@ class MyCards {
                         onClick = {
                             viewModel.deleteCardByID(card.id)
                             showDeleteDialog.value = false
+                            onDeleteClick()
                         }
                     ) {
                         Text("Delete")
@@ -88,7 +90,9 @@ class MyCards {
                 val color = Color(card.color.toColorInt())
                 val blackOrWhite = if (color.luminance() > 0.5) Color.Black else Color.White
                 Row {
-                    Column {
+                    Column (
+                        modifier = Modifier.weight(1f)
+                    ){
                         Text(
                             text = card.name,
                             modifier = Modifier.padding(top = 8.dp),
@@ -106,9 +110,6 @@ class MyCards {
                             color = blackOrWhite
                         )
                     }
-                    Spacer(
-                        modifier = Modifier.weight(1f)
-                    )
                     IconButton(
                         onClick = { showEditDialog.value = true },
 
@@ -191,13 +192,15 @@ class MyCards {
     fun ShowCard(
         card: Card?,
         viewModel: MainViewModel,
-        onEditClick: () -> Unit
+        onEditClick: () -> Unit,
+        onDeleteClick: () -> Unit
     ){
         if (card != null) {
             Cards(
                 card = card,
                 viewModel = viewModel,
-                onEditClick = onEditClick
+                onEditClick = onEditClick,
+                onDeleteClick = onDeleteClick
             )
         }
     }
