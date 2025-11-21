@@ -33,41 +33,75 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.cards_app.ui.theme.Cards_appTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        splashScreen.setKeepOnScreenCondition {
+            viewModel.isLoading.value
+        }
 
         setContent {
             var screenStack by remember { mutableStateOf(listOf(0)) }//screen stack
             var cardStack by remember { mutableStateOf(listOf<Card?>(null)) }//card stack
-            var numberOfScreen = remember(screenStack){screenStack.last()}
-            var currentCard by remember { mutableStateOf<Card?>(null) }
-            var editState by remember { mutableStateOf(false) }
-            fun navigateTo(screen: Int, edit: Boolean = false, cardToEdit: Card? = null) {
-                if (screen == numberOfScreen) return
+
+            val numberOfScreen = remember(screenStack){screenStack.last()}//current screen
+            val currentCard = remember(cardStack){cardStack.last()}//current card
+
+            var editState by remember { mutableStateOf(false) }//edit state
+
+            fun navigateTo(screen: Int, edit: Boolean = false, cardToEdit: Card? = null) { //function that navigates to any screen and sets the current card and edit state
+                if (screen == numberOfScreen && currentCard == cardToEdit) return
                 editState = edit
-                currentCard = cardToEdit
+
+                val nextCard = // Case A: You explicitly said "Switch to THIS card"
+                    cardToEdit
+                        ?: if (screen == 3 || (screen == 1 && edit)) {
+                            currentCard // Case B: "Keep looking at the same card"
+                        } else {
+                            null // Case C: "Forget the card" (Home, Account, Add New)
+                        }
+
+                val newCardStack = cardStack + nextCard
                 val newStack = screenStack + screen
-                screenStack = if (newStack.size > 5){
-                    newStack.drop(1)
-                }else{
-                    newStack
+
+                if (newStack.size > 10) {
+                    cardStack = newCardStack.drop(1)
+                    screenStack = newStack.drop(1)
+                } else {
+                    cardStack = newCardStack
+                    screenStack = newStack
                 }
-                numberOfScreen = screenStack.last()
+
             }
             fun navigateBack() {
                 editState = false
                 if (screenStack.size > 1){
                     screenStack = screenStack.dropLast(1)
-                }else if (screenStack.size == 1 && screenStack.last() != 0){
+                    cardStack = cardStack.dropLast(1)
+                }else {
                     screenStack = listOf(0)
+                    cardStack = listOf(null)
                 }
-                numberOfScreen = screenStack.last()
+            }
+            fun deleteCardFromStack(cardToDelete: Card?) {
+                if (cardToDelete == null) return
+                val zipedStacks = screenStack.zip(cardStack)
+                val newStacks = zipedStacks.filter { it.second != cardToDelete }
+                if (newStacks.isEmpty()) {
+                    screenStack = listOf(0)
+                    cardStack = listOf(null)
+                }else {
+                    screenStack = newStacks.map { it.first }
+                    cardStack = newStacks.map { it.second }
+                }
+                navigateTo(0)
             }
             val dropdownMenuItems: List<DropdownAction> = listOf(
                 DropdownAction("Your cards", onClick = { navigateTo(0) }, icon = R.drawable.outline_account_balance_wallet_24),
@@ -106,7 +140,7 @@ class MainActivity : ComponentActivity() {
                                             navigateTo(1, true, card)
                                         },
                                         onDeleteClick = {
-                                            navigateTo(0)
+                                            deleteCardFromStack(card)
                                         }
                                     )
                                 }
@@ -157,7 +191,7 @@ class MainActivity : ComponentActivity() {
                                         navigateTo(1, true, currentCard)
                                     },
                                     onDeleteClick = {
-                                        navigateTo(0)
+                                        deleteCardFromStack(currentCard)
                                     }
                                 )
                             }
