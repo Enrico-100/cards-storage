@@ -29,16 +29,15 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
 import java.io.File
-import androidx.core.graphics.toColorInt
 
 class MyCards {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun Cards(
         card: Card,
-        viewModel: MainViewModel,
         onCardClick: () -> Unit = {},
         onEditClick: () -> Unit = {},
         onDeleteClick: () -> Unit = {}
@@ -56,7 +55,6 @@ class MyCards {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            viewModel.deleteCardByID(card.id)
                             showDeleteDialog.value = false
                             onDeleteClick()
                         }
@@ -190,14 +188,12 @@ class MyCards {
     @Composable
     fun ShowCard(
         card: Card?,
-        viewModel: MainViewModel,
         onEditClick: () -> Unit,
         onDeleteClick: () -> Unit
     ){
         if (card != null) {
             Cards(
                 card = card,
-                viewModel = viewModel,
                 onEditClick = onEditClick,
                 onDeleteClick = onDeleteClick
             )

@@ -48,78 +48,31 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            var screenStack by remember { mutableStateOf(listOf(0)) }//screen stack
-            var cardStack by remember { mutableStateOf(listOf<Card?>(null)) }//card stack
+            val screenStack by viewModel.screenStack.collectAsState()
+            val cardStack by viewModel.cardStack.collectAsState()
+            val editState by viewModel.editState.collectAsState()
+            val cards by viewModel.cards.collectAsState()
+            val numberOfScreen = remember(screenStack) { screenStack.last() }
+            val currentCard = remember(cardStack) { cardStack.last() }
 
-            val numberOfScreen = remember(screenStack){screenStack.last()}//current screen
-            val currentCard = remember(cardStack){cardStack.last()}//current card
 
-            var editState by remember { mutableStateOf(false) }//edit state
-
-            fun navigateTo(screen: Int, edit: Boolean = false, cardToEdit: Card? = null) { //function that navigates to any screen and sets the current card and edit state
-                if (screen == numberOfScreen && currentCard == cardToEdit) return
-                editState = edit
-
-                val nextCard = // Case A: You explicitly said "Switch to THIS card"
-                    cardToEdit
-                        ?: if (screen == 3 || (screen == 1 && edit)) {
-                            currentCard // Case B: "Keep looking at the same card"
-                        } else {
-                            null // Case C: "Forget the card" (Home, Account, Add New)
-                        }
-
-                val newCardStack = cardStack + nextCard
-                val newStack = screenStack + screen
-
-                if (newStack.size > 10) {
-                    cardStack = newCardStack.drop(1)
-                    screenStack = newStack.drop(1)
-                } else {
-                    cardStack = newCardStack
-                    screenStack = newStack
-                }
-
-            }
-            fun navigateBack() {
-                editState = false
-                if (screenStack.size > 1){
-                    screenStack = screenStack.dropLast(1)
-                    cardStack = cardStack.dropLast(1)
-                }else {
-                    screenStack = listOf(0)
-                    cardStack = listOf(null)
-                }
-            }
-            fun deleteCardFromStack(cardToDelete: Card?) {
-                if (cardToDelete == null) return
-                val zipedStacks = screenStack.zip(cardStack)
-                val newStacks = zipedStacks.filter { it.second != cardToDelete }
-                if (newStacks.isEmpty()) {
-                    screenStack = listOf(0)
-                    cardStack = listOf(null)
-                }else {
-                    screenStack = newStacks.map { it.first }
-                    cardStack = newStacks.map { it.second }
-                }
-                navigateTo(0)
-            }
             val dropdownMenuItems: List<DropdownAction> = listOf(
-                DropdownAction("Your cards", onClick = { navigateTo(0) }, icon = R.drawable.outline_account_balance_wallet_24),
-                DropdownAction("Add card", onClick = { navigateTo(1) }, icon = R.drawable.outline_add_card_24),
-                DropdownAction("Account", onClick = { navigateTo(2) }, icon = R.drawable.outline_account_circle_24)
+                DropdownAction("Your cards", onClick = { viewModel.navigateTo(0) }, icon = R.drawable.outline_account_balance_wallet_24),
+                DropdownAction("Add card", onClick = { viewModel.navigateTo(1) }, icon = R.drawable.outline_add_card_24),
+                DropdownAction("Account", onClick = { viewModel.navigateTo(2) }, icon = R.drawable.outline_account_circle_24)
             )
 
             Cards_appTheme {
-                val cards by viewModel.cards.collectAsState()
+
                 val myCards = MyCards()
 
                 BackHandler(screenStack.size > 1 || screenStack.last() != 0) {
-                    navigateBack()
+                    viewModel.navigateBack()
                 }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
-                        MyTopAppBar(title = "Cards App", dropdownMenuItems = dropdownMenuItems, onTitleClick = { navigateTo(0) })
+                        MyTopAppBar(title = "Cards App", dropdownMenuItems = dropdownMenuItems, onTitleClick = { viewModel.navigateTo(0) })
                     }
                 ) { innerPadding ->
                     when (numberOfScreen) {
@@ -132,21 +85,20 @@ class MainActivity : ComponentActivity() {
                                 items(cards) { card ->
                                     myCards.Cards(
                                         card = card,
-                                        viewModel = viewModel,
                                         onCardClick = {
-                                            navigateTo(3, false,card)
+                                            viewModel.navigateTo(3, false,card)
                                         },
                                         onEditClick = {
-                                            navigateTo(1, true, card)
+                                            viewModel.navigateTo(1, true, card)
                                         },
                                         onDeleteClick = {
-                                            deleteCardFromStack(card)
+                                            viewModel.deleteCardFromStack(card)
                                         }
                                     )
                                 }
                                 item {
                                     myCards.NoCardsYet(
-                                        onCardClick = { navigateTo(1) },
+                                        onCardClick = { viewModel.navigateTo(1) },
                                         text = if (cards.isEmpty()) "No cards yet, add a card to get started." else "Add a card."
                                     )
                                 }
@@ -161,7 +113,7 @@ class MainActivity : ComponentActivity() {
                                 AddCard().MyAddCard(
                                     viewModel = viewModel,
                                     onButtonClick = {
-                                        navigateTo(0)
+                                        viewModel.navigateTo(0)
                                     },
                                     card = if (editState) currentCard else null
                                 )
@@ -186,12 +138,11 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 myCards.ShowCard(
                                     card = currentCard,
-                                    viewModel = viewModel,
                                     onEditClick = {
-                                        navigateTo(1, true, currentCard)
+                                        viewModel.navigateTo(1, true, currentCard)
                                     },
                                     onDeleteClick = {
-                                        deleteCardFromStack(currentCard)
+                                        viewModel.deleteCardFromStack(currentCard)
                                     }
                                 )
                             }
