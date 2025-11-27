@@ -50,10 +50,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val screenStack by viewModel.screenStack.collectAsState()
             val cardStack by viewModel.cardStack.collectAsState()
-            val editState by viewModel.editState.collectAsState()
+            val editStack by viewModel.editStack.collectAsState()
             val cards by viewModel.cards.collectAsState()
             val numberOfScreen = remember(screenStack) { screenStack.last() }
             val currentCard = remember(cardStack) { cardStack.last() }
+            val editState = remember(editStack) { editStack.last() }
 
 
             val dropdownMenuItems: List<DropdownAction> = listOf(
@@ -93,6 +94,9 @@ class MainActivity : ComponentActivity() {
                                         },
                                         onDeleteClick = {
                                             viewModel.deleteCardFromStack(card)
+                                        },
+                                        onRegenerate = {
+                                            viewModel.regenerateCardImage(card, this@MainActivity)
                                         }
                                     )
                                 }
@@ -143,6 +147,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onDeleteClick = {
                                         viewModel.deleteCardFromStack(currentCard)
+                                    },
+                                    onRegenerate = { card ->
+                                        viewModel.regenerateCardImage(card, this@MainActivity)
                                     }
                                 )
                             }

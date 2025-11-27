@@ -4,10 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Card(
-    val id: String,
-    val number: String,
+    val id: String,//unique identifier for each card
+    val number: String,//card number
     val name: String,
     val nameOfCard: String,
-    val picture: String?,
-    val color: String
+    val picture: String?,//path to barcode image
+    val color: String//color of the card
 )

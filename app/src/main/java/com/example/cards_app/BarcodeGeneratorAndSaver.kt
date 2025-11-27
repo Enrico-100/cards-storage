@@ -65,8 +65,16 @@ class BarcodeGeneratorAndSaver {
             return imageFile.absolutePath
         } catch (e: IOException) {
             Log.e("SaveBitmap", "Error saving image: ${e.message}", e)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+            return null
         } catch (e: Exception) { // Catch any other unexpected errors during saving
             Log.e("SaveBitmap", "Unexpected error saving image: ${e.message}", e)
+            if (imageFile.exists()) {
+                imageFile.delete()
+            }
+            return null
         } finally {
             try {
                 fos?.close()
@@ -74,9 +82,5 @@ class BarcodeGeneratorAndSaver {
                 Log.e("SaveBitmap", "Error closing FileOutputStream: ${e.message}", e)
             }
         }
-        if (imageFile.exists()) {
-            imageFile.delete()
-        }
-        return null
     }
 }

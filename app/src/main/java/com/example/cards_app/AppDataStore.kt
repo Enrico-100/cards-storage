@@ -9,7 +9,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
@@ -38,29 +37,68 @@ class AppDataStore(private val context: Context) {
             Log.e("AppDataStore", "Error reading cards from DataStore: ${exception.message}")
             emit(emptyList())
         }
-    suspend fun saveCards(cards: List<Card>) {
+    suspend fun saveCard(newCard: Card) {
         try {
-            val jsonString = Json.encodeToString(cards)
             context.cardsDataStore.edit { preferences ->
+                val currentJson = preferences[CARDS_KEY]
+                val currentCards = if (currentJson != null && currentJson.isNotEmpty()) {
+                    try {
+                        Json.decodeFromString<MutableList<Card>>(currentJson)
+                    } catch (e: Exception) {
+                        Log.e("AppDataStore", "Error decoding or reading cards from DataStore: ${e.message}")
+                        mutableListOf()
+                    }
+                } else {
+                    mutableListOf()
+                }
+                val existingCardIndex = currentCards.indexOfFirst { it.id == newCard.id }
+                if (existingCardIndex != -1) {
+                    currentCards[existingCardIndex] = newCard
+                } else {
+                    currentCards.add(newCard)
+                }
+                val jsonString = Json.encodeToString(currentCards)
                 preferences[CARDS_KEY] = jsonString
+                Log.d("AppDataStore", "Cards saved successfully. JSON: $jsonString")
             }
-            Log.d("AppDataStore", "Cards saved successfully. JSON: $jsonString")
         }catch (e: Exception){
             Log.e("AppDataStore", "Error encoding or saving cards to DataStore: ${e.message}")
 
         }
-
     }
     suspend fun deleteCardByID(id: String) {
-        val currentCards = cardsFlow.first().toMutableList()//gets currentList<Card>
-        val initialSize = currentCards.size //gets initial size
-        currentCards.removeAll { it.id == id } //removes card with id
-        if (currentCards.size < initialSize) {
-            saveCards(currentCards)
-            Log.d("AppDataStore", "Card with id $id deleted successfully.")
-        }else{
-            Log.d("AppDataStore", "Card with id $id not found for deletion.")
+        try {
+            context.cardsDataStore.edit { preferences ->
+                // 1. Read current list safely
+                val currentJson = preferences[CARDS_KEY]
+                val currentCards = if (currentJson != null && currentJson.isNotEmpty()) {
+                    try {
+                        Json.decodeFromString<MutableList<Card>>(currentJson)
+                    } catch (e: Exception) {
+                        Log.e("AppDataStore", "Error decoding or reading cards from DataStore: ${e.message}")
+                        mutableListOf()
+                    }
+                } else {
+                    mutableListOf()
+                }
+
+                // 2. Remove the card
+                val initialSize = currentCards.size
+                currentCards.removeAll { it.id == id }
+
+                // 3. Save only if changed
+                if (currentCards.size < initialSize) {
+                    val jsonString = Json.encodeToString(currentCards)
+                    preferences[CARDS_KEY] = jsonString
+                    Log.d("AppDataStore", "Card with id $id deleted successfully.")
+                } else {
+                    Log.d("AppDataStore", "Card with id $id not found for deletion.")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("AppDataStore", "Error deleting card: ${e.message}")
         }
     }
+
 
 }

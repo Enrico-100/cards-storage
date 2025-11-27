@@ -40,7 +40,8 @@ class MyCards {
         card: Card,
         onCardClick: () -> Unit = {},
         onEditClick: () -> Unit = {},
-        onDeleteClick: () -> Unit = {}
+        onDeleteClick: () -> Unit = {},
+        onRegenerate: (Card) -> Unit = {}
     ) {
         val showDeleteDialog = remember { mutableStateOf(false) }
         val showEditDialog = remember { mutableStateOf(false) }
@@ -131,19 +132,24 @@ class MyCards {
 
                 // Display the generated barcode image if the path exists
                 if (card.picture != null) {
-                    Log.d("DisplayImage", "Attempting to load image from: ${card.picture}")
-                    AsyncImage(
-                        model = File(card.picture), // <<<< Use Coil's AsyncImage
-                        // Pass the File object from the path
-                        contentDescription = "Barcode for ${card.nameOfCard}",
-                        modifier = Modifier
-                            .fillMaxWidth() // Let the image take available width
-                            .padding(vertical = 8.dp)
-                            .padding(end = 16.dp),
-                        contentScale = ContentScale.FillWidth // Scale the image to fit within bounds
-                        // while maintaining aspect ratio.
-                        // You might also use ContentScale.FillWidth
-                    )
+                    if(File(card.picture).exists()) {
+                        Log.d("DisplayImage", "Attempting to load image from: ${card.picture}")
+                        AsyncImage(
+                            model = File(card.picture), // <<<< Use Coil's AsyncImage
+                            // Pass the File object from the path
+                            contentDescription = "Barcode for ${card.nameOfCard}",
+                            modifier = Modifier
+                                .fillMaxWidth() // Let the image take available width
+                                .padding(vertical = 8.dp)
+                                .padding(end = 16.dp),
+                            contentScale = ContentScale.FillWidth // Scale the image to fit within bounds
+                        )
+                    }else{
+                        Log.d("DisplayImage", "Image file does not exist: ${card.picture}, regenerating...")
+                        androidx.compose.runtime.SideEffect {
+                            onRegenerate(card)
+                        }
+                    }
                 } else {
                     // Optional: Show a placeholder or message if no barcode image
                     Text(
@@ -189,13 +195,15 @@ class MyCards {
     fun ShowCard(
         card: Card?,
         onEditClick: () -> Unit,
-        onDeleteClick: () -> Unit
+        onDeleteClick: () -> Unit,
+        onRegenerate: (Card) -> Unit = {}
     ){
         if (card != null) {
             Cards(
                 card = card,
                 onEditClick = onEditClick,
-                onDeleteClick = onDeleteClick
+                onDeleteClick = onDeleteClick,
+                onRegenerate = { onRegenerate(card) }
             )
         }
     }
