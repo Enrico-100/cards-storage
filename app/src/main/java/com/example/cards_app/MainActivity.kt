@@ -96,7 +96,7 @@ class MainActivity : ComponentActivity() {
                                             viewModel.deleteCardFromStack(card)
                                         },
                                         onRegenerate = {
-                                            viewModel.regenerateCardImage(card, this@MainActivity)
+                                            viewModel.regenerateCardImage(it, this@MainActivity)
                                         }
                                     )
                                 }
@@ -148,8 +148,8 @@ class MainActivity : ComponentActivity() {
                                     onDeleteClick = {
                                         viewModel.deleteCardFromStack(currentCard)
                                     },
-                                    onRegenerate = { card ->
-                                        viewModel.regenerateCardImage(card, this@MainActivity)
+                                    onRegenerate = {
+                                        viewModel.regenerateCardImage(it, this@MainActivity)
                                     }
                                 )
                             }

@@ -142,10 +142,14 @@ class MyCards {
                                 .fillMaxWidth() // Let the image take available width
                                 .padding(vertical = 8.dp)
                                 .padding(end = 16.dp),
-                            contentScale = ContentScale.FillWidth // Scale the image to fit within bounds
+                            contentScale = ContentScale.FillWidth, // Scale the image to fit within bounds
+                            onError = {
+                                Log.e("ImageLoad", "Coil failed to load image. Regenerating...")
+                                onRegenerate(card)
+                            }
                         )
                     }else{
-                        Log.d("DisplayImage", "Image file does not exist: ${card.picture}, regenerating...")
+                        Log.e("DisplayImage", "Image file does not exist: ${card.picture}, regenerating...")
                         androidx.compose.runtime.SideEffect {
                             onRegenerate(card)
                         }
@@ -203,7 +207,7 @@ class MyCards {
                 card = card,
                 onEditClick = onEditClick,
                 onDeleteClick = onDeleteClick,
-                onRegenerate = { onRegenerate(card) }
+                onRegenerate = { onRegenerate(it) }
             )
         }
     }
