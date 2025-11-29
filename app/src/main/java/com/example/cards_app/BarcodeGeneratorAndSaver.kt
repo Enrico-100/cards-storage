@@ -41,7 +41,7 @@ class BarcodeGeneratorAndSaver {
     fun saveBitmapToFile(
         context: Context,
         bitmap: Bitmap,
-        desiredFileName: String
+        cardId: String
     ): String? {
         val imageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         if (imageDir == null) {
@@ -54,8 +54,13 @@ class BarcodeGeneratorAndSaver {
                 return null // Failed to create directory
             }
         }
+        val oldFiles = imageDir.listFiles { _, name ->
+            name.startsWith(cardId) && name.endsWith(".png")
+        }
+        oldFiles?.forEach { it.delete() }
 
-        val finalFileName = "$desiredFileName.png"
+        val timestamp = System.currentTimeMillis().toString(16)
+        val finalFileName = "${cardId}_${timestamp}.png"
         val imageFile = File(imageDir, finalFileName)
         var fos: FileOutputStream? = null
         try {

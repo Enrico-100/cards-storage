@@ -82,17 +82,32 @@ class AppDataStore(private val context: Context) {
                     mutableListOf()
                 }
 
-                // 2. Remove the card
-                val initialSize = currentCards.size
-                currentCards.removeAll { it.id == id }
+                // 2. Find the card first to get the picture path
+                val cardToDelete = currentCards.find { it.id == id }
 
-                // 3. Save only if changed
-                if (currentCards.size < initialSize) {
+                if (cardToDelete != null) {
+                    // --- Delete the file from storage ---
+                    if (cardToDelete.picture != null) {
+                        try {
+                            val file = java.io.File(cardToDelete.picture)
+                            if (file.exists()) {
+                                file.delete()
+                                Log.d("AppDataStore", "Image file deleted: ${cardToDelete.picture}")
+                            }
+                        } catch (e: Exception) {
+                            Log.e("AppDataStore", "Error deleting file: ${e.message}")
+                        }
+                    }
+                    // -----------------------------------------
+
+                    // 3. Now remove it from the list and save
+                    currentCards.remove(cardToDelete)
+
                     val jsonString = Json.encodeToString(currentCards)
                     preferences[CARDS_KEY] = jsonString
                     Log.d("AppDataStore", "Card with id $id deleted successfully.")
                 } else {
-                    Log.d("AppDataStore", "Card with id $id not found for deletion.")
+                    Log.e("AppDataStore", "Card with id $id not found for deletion.")
                 }
             }
         } catch (e: Exception) {

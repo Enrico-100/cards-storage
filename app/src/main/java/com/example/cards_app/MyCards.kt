@@ -153,6 +153,11 @@ class MyCards {
                         androidx.compose.runtime.SideEffect {
                             onRegenerate(card)
                         }
+                        Text(
+                            text = "Generating barcode...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = blackOrWhite
+                        )
                     }
                 } else {
                     // Optional: Show a placeholder or message if no barcode image

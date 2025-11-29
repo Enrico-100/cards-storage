@@ -53,8 +53,15 @@ class MainActivity : ComponentActivity() {
             val editStack by viewModel.editStack.collectAsState()
             val cards by viewModel.cards.collectAsState()
             val numberOfScreen = remember(screenStack) { screenStack.last() }
-            val currentCard = remember(cardStack) { cardStack.last() }
+            val stackCard = remember(cardStack) { cardStack.last() }
             val editState = remember(editStack) { editStack.last() }
+            val currentCard = remember(cards, stackCard) {
+                if (stackCard != null) {
+                    cards.find { it.id == stackCard.id } ?: stackCard
+                } else {
+                    null
+                }
+            }
 
 
             val dropdownMenuItems: List<DropdownAction> = listOf(
