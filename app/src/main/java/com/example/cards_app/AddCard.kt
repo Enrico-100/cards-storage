@@ -24,9 +24,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -141,8 +141,7 @@ class AddCard {
                         return@Button
                     }
                     val card = Card(id=id,number=number, name=name, nameOfCard=nameOfCard, picture=savePath.value.toString(), color=colorString)
-                    viewModel.addCardAndSave(card)
-                    onButtonClick()
+                    viewModel.addCardAndSave(card, onButtonClick)
                 },
                 modifier = Modifier.padding(top = 16.dp)
             ) {

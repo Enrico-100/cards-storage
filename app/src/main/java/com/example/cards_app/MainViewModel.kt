@@ -74,11 +74,11 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
             _editStack.value = listOf(false)
         }
     }
-    fun deleteCardFromStack(cardToDelete: Card?) {
-        if (cardToDelete == null) return
-        deleteCardByID(cardToDelete.id)
+    fun deleteCardFromStack(cardToDeleted: Card?) {
+        if (cardToDeleted == null) return
+        deleteCardByID(cardToDeleted.id)
         val zipedStacks = _screenStack.value.zip(_cardStack.value).zip(_editStack.value) { (screen, card), edit -> Triple(screen, card, edit) }
-        val newStacks = zipedStacks.filter { it.second?.id != cardToDelete.id }
+        val newStacks = zipedStacks.filter { it.second?.id != cardToDeleted.id }
         if (newStacks.isEmpty()) {
             _screenStack.value = listOf(0)
             _cardStack.value = listOf(null)
@@ -102,9 +102,10 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
             initialValue = emptyList()
         )
     //--add card and save logic--//
-    fun addCardAndSave(newCard: Card) {//add card and save to disk
+    fun addCardAndSave(newCard: Card, onSucess: () -> Unit) {//add card and save to disk
         viewModelScope.launch {
             dataStore.saveCard(newCard)
+            onSucess()
         }
     }
     fun deleteCardByID(id: String) {//delete card by id
@@ -124,13 +125,20 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
                 // Using the card ID as the filename keeps it unique and consistent
                 val newPath = generator.saveBitmapToFile(context, bitmap, card.id)
                 if (newPath != null) {
-                    // 4. Create a copy of the card with the updated path
-                    val updatedCard = card.copy(picture = newPath)
-                    // 5. Update the database
-                    // This calls your thread-safe saveCard function in AppDataStore
-                    dataStore.saveCard(updatedCard)
+                    val currentList = cards.value
+                    val latestCard = currentList.find { it.id == card.id }
 
-                    Log.d("MainViewModel", "Regenerated and saved barcode for ${card.name}")
+                    if (latestCard != null) {
+                        // 4. Create a copy of the LATEST card with the updated path
+                        // This ensures we keep any color/name changes made while the image was generating.
+                        val updatedCard = latestCard.copy(picture = newPath)
+
+                        // 5. Update the database
+                        dataStore.saveCard(updatedCard)
+                        Log.d("MainViewModel", "Regenerated and saved barcode for ${latestCard.name}")
+                    } else {
+                        Log.w("MainViewModel", "Card ${card.id} was deleted during regeneration.")
+                    }
                 } else {
                     Log.e("MainViewModel", "Failed to save generated bitmap for ${card.name}")
                 }
