@@ -87,16 +87,14 @@ class AppDataStore(private val context: Context) {
 
                 if (cardToDelete != null) {
                     // --- Delete the file from storage ---
-                    if (cardToDelete.picture != null) {
-                        try {
-                            val file = java.io.File(cardToDelete.picture)
-                            if (file.exists()) {
-                                file.delete()
-                                Log.d("AppDataStore", "Image file deleted: ${cardToDelete.picture}")
-                            }
-                        } catch (e: Exception) {
-                            Log.e("AppDataStore", "Error deleting file: ${e.message}")
+                    try {
+                        val file = java.io.File(cardToDelete.picture)
+                        if (file.exists()) {
+                            file.delete()
+                            Log.d("AppDataStore", "Image file deleted: ${cardToDelete.picture}")
                         }
+                    } catch (e: Exception) {
+                        Log.e("AppDataStore", "Error deleting file: ${e.message}")
                     }
                     // -----------------------------------------
 

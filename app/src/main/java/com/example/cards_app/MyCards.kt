@@ -130,41 +130,31 @@ class MyCards {
                     }
                 }
 
-                // Display the generated barcode image if the path exists
-                if (card.picture != null) {
-                    if(File(card.picture).exists()) {
-                        Log.d("DisplayImage", "Attempting to load image from: ${card.picture}")
-                        AsyncImage(
-                            model = File(card.picture), // <<<< Use Coil's AsyncImage
-                            // Pass the File object from the path
-                            contentDescription = "Barcode for ${card.nameOfCard}",
-                            modifier = Modifier
-                                .fillMaxWidth() // Let the image take available width
-                                .padding(vertical = 8.dp)
-                                .padding(end = 16.dp),
-                            contentScale = ContentScale.FillWidth, // Scale the image to fit within bounds
-                            onError = {
-                                Log.e("ImageLoad", "Coil failed to load image. Regenerating...")
-                                onRegenerate(card)
-                            }
-                        )
-                    }else{
-                        Log.e("DisplayImage", "Image file does not exist: ${card.picture}, regenerating...")
-                        androidx.compose.runtime.SideEffect {
+                if(File(card.picture).exists()) {
+                    Log.d("DisplayImage", "Attempting to load image from: ${card.picture}")
+                    AsyncImage(
+                        model = File(card.picture), // <<<< Use Coil's AsyncImage
+                        // Pass the File object from the path
+                        contentDescription = "Barcode for ${card.nameOfCard}",
+                        modifier = Modifier
+                            .fillMaxWidth() // Let the image take available width
+                            .padding(vertical = 8.dp)
+                            .padding(end = 16.dp),
+                        contentScale = ContentScale.FillWidth, // Scale the image to fit within bounds
+                        onError = {
+                            Log.e("ImageLoad", "Coil failed to load image. Regenerating...")
                             onRegenerate(card)
                         }
-                        Text(
-                            text = "Generating barcode...",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = blackOrWhite
-                        )
+                    )
+                }else{
+                    Log.e("DisplayImage", "Image file does not exist: ${card.picture}, regenerating...")
+                    androidx.compose.runtime.SideEffect {
+                        onRegenerate(card)
                     }
-                } else {
-                    // Optional: Show a placeholder or message if no barcode image
                     Text(
-                        text = "No barcode image available.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
+                        text = "Generating barcode...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = blackOrWhite
                     )
                 }
             }

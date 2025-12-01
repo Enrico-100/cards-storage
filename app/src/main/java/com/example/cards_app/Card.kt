@@ -8,6 +8,6 @@ data class Card(
     val number: String,//card number
     val name: String,
     val nameOfCard: String,
-    val picture: String?,//path to barcode image
+    val picture: String,//path to barcode image
     val color: String//color of the card
 )
