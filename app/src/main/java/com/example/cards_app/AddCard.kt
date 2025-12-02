@@ -153,7 +153,7 @@ class AddCard {
                         showValidationMessage = false
                         validationMessage = ""
                         },
-                    title = { Text("Validation error") },
+                    title = { Text("Validation Error") },
                     text = { Text(validationMessage) },
                     confirmButton = {
                         Button(

@@ -139,7 +139,6 @@ class MainActivity : ComponentActivity() {
                                 Greeting(
                                     name = "account screen",//TODO: add account screen
                                 )
-                                AccountScreen().MyAccountScreen()
                             }
                         }
                         3 -> {//show one card only screen
