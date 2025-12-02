@@ -139,6 +139,7 @@ class MainActivity : ComponentActivity() {
                                 Greeting(
                                     name = "account screen",//TODO: add account screen
                                 )
+                                BackendManegment().AccountScreen()
                             }
                         }
                         3 -> {//show one card only screen
