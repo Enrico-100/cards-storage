@@ -15,13 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-class BackendManegment {
+class AccountScreen {
     @Composable
-    fun AccountScreen(){
+    fun MyAccountScreen(){
         var loogedIn by remember { mutableStateOf(false) }
         var username by remember { mutableStateOf("") }
-        var password by remember { mutableStateOf("") }
-        var errorMessage by remember { mutableStateOf("") }
+//        var password by remember { mutableStateOf("") }
+//        var errorMessage by remember { mutableStateOf("") }
 
         Column(
             modifier = Modifier
