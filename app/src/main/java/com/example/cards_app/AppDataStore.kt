@@ -114,6 +114,15 @@ class AppDataStore(private val context: Context) {
             Log.e("AppDataStore", "Error deleting card: ${e.message}")
         }
     }
-
-
+    suspend fun overwriteAll(cards: List<Card>) {
+        try {
+            context.cardsDataStore.edit { preferences ->
+                val jsonString = Json.encodeToString(cards)
+                preferences[CARDS_KEY] = jsonString
+                Log.d("AppDataStore", "Cards overwritten successfully. JSON: $jsonString")
+            }
+        } catch (e: Exception) {
+            Log.e("AppDataStore", "Error encoding or saving cards to DataStore: ${e.message}")
+        }
+    }
 }

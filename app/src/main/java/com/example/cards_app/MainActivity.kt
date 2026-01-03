@@ -130,16 +130,23 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-                        2 -> {//account screen
+                        2 -> {// login screen
                             Column(
                                 modifier = Modifier
                                     .padding(innerPadding)
                                     .fillMaxSize()
                             ) {
-                                Greeting(
-                                    name = "account screen",//TODO: add account screen
+                                LogInScreen().MyLogInScreen(
+                                    onSignUpClick = {
+                                        viewModel.navigateTo(4)
+                                    },
+                                    onLoginSuccess = {
+                                        viewModel.replaceScreenOnStack(5)
+                                    },
+                                    onForgotPasswordClick = {
+                                        viewModel.navigateTo(6)
+                                    }
                                 )
-                                AccountScreen().MyAccountScreen()
                             }
                         }
                         3 -> {//show one card only screen
@@ -162,11 +169,47 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-
+                        4 -> {//sign up screen
+                            Column(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize()
+                            ) {
+                                SignUpScreen().MySignUpScreen(
+                                    onSignUpSuccess = {
+                                        viewModel.replaceScreenOnStack(5)
+                                    }
+                                )
+                            }
+                        }
+                        5 -> {//account screen
+                            Column(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize()
+                            ) {
+                                AccountScreen().MyAccountScreen(
+                                    onLogOut = {
+                                        viewModel.replaceScreenOnStack(2)
+                                        viewModel.navigateTo(0)
+                                    }
+                                )
+                            }
+                        }
+                        6 -> {//recovery screen
+                            Column(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize()
+                            ) {
+                                RecoveryScreen(
+                                    onRecoverySuccess = {
+                                        viewModel.replaceScreenOnStack(2)
+                                    }
+                                )
+                            }
+                        }
                     }
-
-
-
                 }
             }
         }
@@ -229,13 +272,5 @@ fun MyTopAppBar(
             navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
-    )
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
     )
 }

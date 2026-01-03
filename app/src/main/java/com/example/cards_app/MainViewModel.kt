@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MainViewModel (application: Application) : AndroidViewModel(application) {
-    private val dataStore = AppDataStore(application)//datastore
+    private val localCardsRepo = LocalCardsRepository(application)//a way to communicate with datastore
 
     //--navigation state--//
     // screenStack //
@@ -91,7 +91,13 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
         navigateTo(0)
     }
 
-    val cards: StateFlow<List<Card>> = dataStore.cardsFlow//cards read from disk
+    fun replaceScreenOnStack(screen: Int) {//takes the screen to use when replacing current screen
+        val currentScreen = screenStack.value.last()
+        if (currentScreen == screen) return
+        val newStack = _screenStack.value.map { if (it == currentScreen) screen else it }
+        _screenStack.value = newStack
+    }
+    val cards: StateFlow<List<Card>> = localCardsRepo.cardsFlow//cards read from disk
         .onEach {
             delay(20)
             _isLoading.value = false
@@ -104,15 +110,23 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
     //--add card and save logic--//
     fun addCardAndSave(newCard: Card, onSucess: () -> Unit) {//add card and save to disk
         viewModelScope.launch {
-            dataStore.saveCard(newCard)
+            localCardsRepo.saveCard(newCard)
             onSucess()
         }
     }
     fun deleteCardByID(id: String) {//delete card by id
         viewModelScope.launch {
-            dataStore.deleteCardByID(id)
+            localCardsRepo.deleteCardByID(id)
         }
     }
+
+    fun overwriteLocalCards(cards: List<Card>) {//overwrite local cards
+        viewModelScope.launch {
+            localCardsRepo.overwriteAll(cards)
+            Log.d("MainViewModel", "Local cards overwritten")
+        }
+    }
+
     //--card regeneration logic--//
     fun regenerateCardImage(card: Card, context: android.content.Context) {
         // 1. Launch on IO thread (Prevents UI Freeze)
@@ -134,7 +148,7 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
                         val updatedCard = latestCard.copy(picture = newPath)
 
                         // 5. Update the database
-                        dataStore.saveCard(updatedCard)
+                        localCardsRepo.saveCard(updatedCard)
                         Log.d("MainViewModel", "Regenerated and saved barcode for ${latestCard.name}")
                     } else {
                         Log.w("MainViewModel", "Card ${card.id} was deleted during regeneration.")
