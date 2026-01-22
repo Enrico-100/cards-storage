@@ -24,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,7 +43,7 @@ import com.example.cards_app.communication.CommunicationViewModel
 import com.example.cards_app.communication.CommunicationViewModelFactory
 
 // Define an enum to manage the state of the recovery flow
-private enum class RecoveryStep {
+enum class RecoveryStep {
     ENTER_USERNAME,
     CHOOSE_CHANNEL,
     ENTER_CODE_AND_RESET,
@@ -57,7 +58,7 @@ fun RecoveryScreen(
     )
 ) {
     val uiState by communicationViewModel.uiState.collectAsState()
-    var step by remember { mutableStateOf(RecoveryStep.ENTER_USERNAME) }
+    val step by communicationViewModel.recoveryStep.collectAsState()
 
     // State for the input fields
     var username by remember { mutableStateOf("") }
@@ -74,7 +75,12 @@ fun RecoveryScreen(
     if (uiState.isSuccess && step == RecoveryStep.SUCCESS) {
         LaunchedEffect(Unit) {
             onRecoverySuccess()
-            communicationViewModel.clearError()
+            communicationViewModel.resetRecoveryStep()
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            communicationViewModel.resetRecoveryStep()
         }
     }
 
@@ -110,7 +116,8 @@ fun RecoveryScreen(
                         value = username,
                         onValueChange = { username = it },
                         label = { Text("Enter your username") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
@@ -125,7 +132,6 @@ fun RecoveryScreen(
                     // When recovery options are successfully fetched, move to the next step
                     if (!recoveryOptions.isNullOrEmpty()) {
                         Log.d("RecoveryScreen", "Recovery options: $recoveryOptions")
-                        step = RecoveryStep.CHOOSE_CHANNEL
                     }
                 }
 
@@ -139,11 +145,6 @@ fun RecoveryScreen(
                                     selectedChannel = option.channel.toString()
                                     selectedChannelValue = option.maskedValue
                                     communicationViewModel.sendRecoveryCode(username, selectedChannel)
-                                    // Move to the next step after sending the code
-                                    if (uiState.isSuccess) {
-                                        step = RecoveryStep.ENTER_CODE_AND_RESET
-                                        communicationViewModel.clearError()
-                                    }
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -193,9 +194,6 @@ fun RecoveryScreen(
                                     recoveryCode,
                                     newPassword
                                 )
-                                if (uiState.isSuccess) {
-                                    step = RecoveryStep.SUCCESS
-                                }
                             }
                             },
                         enabled = !uiState.isLoading,

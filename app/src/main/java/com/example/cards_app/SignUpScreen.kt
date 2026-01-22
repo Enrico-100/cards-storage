@@ -58,26 +58,36 @@ class SignUpScreen {
         if (uiState.isSuccess) {
             LaunchedEffect(Unit) {
                 onSignUpSuccess()
-                communicationViewModel.clearError() // Reset state after navigation
+                communicationViewModel.clearState() // Reset state after navigation
 
             }
         }
 
         // Handle errors from the ViewModel (API or network errors)
         uiState.error?.let { serverError ->
-            AlertDialog(
-                onDismissRequest = { communicationViewModel.clearError() },
-                title = { Text("Registration Failed") },
-                text = { Text(serverError) },
-                confirmButton = {
-                    TextButton(onClick = { communicationViewModel.clearError() }) {
-                        Text("OK")
+            if (uiState.isSuccess){
+                AlertDialog(
+                    onDismissRequest = { communicationViewModel.clearError() },
+                    title = { Text("Registration") },
+                    text = { Text(serverError) },
+                    confirmButton = {
+                        TextButton(onClick = { communicationViewModel.clearError() }) { Text("OK") }
                     }
-                }
-            )
+                )
+            } else {
+                AlertDialog(
+                    onDismissRequest = { communicationViewModel.clearError() },
+                    title = { Text("Registration") },
+                    text = { Text(serverError) },
+                    confirmButton = {
+                        TextButton(onClick = { communicationViewModel.clearError() }) { Text("OK") }
+                    }
+                )
+            }
         }
 
         // Handle client-side validation errors
+        @Suppress("assignedValueIsNeverRead")
         clientSideError?.let { localError ->
             AlertDialog(
                 onDismissRequest = { clientSideError = null },
@@ -145,6 +155,7 @@ class SignUpScreen {
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
+                    @Suppress("assignedValueIsNeverRead")
                     Button(
                         onClick = {
                             if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {

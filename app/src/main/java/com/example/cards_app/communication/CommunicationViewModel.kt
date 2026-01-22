@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cards_app.Card
 import com.example.cards_app.LocalCardsRepository
+import com.example.cards_app.RecoveryStep
 import com.example.cards_app.models.RecoveryInitiateRequest
 import com.example.cards_app.models.RecoveryOption
 import com.example.cards_app.models.RecoveryResetRequest
@@ -46,6 +47,10 @@ class CommunicationViewModel(
     //private val _token = MutableStateFlow<String?>(null)
     //val token = _token.asStateFlow()
 
+    private var _recoveryStep : MutableStateFlow<RecoveryStep> = MutableStateFlow(RecoveryStep.ENTER_USERNAME)
+    val recoveryStep = _recoveryStep.asStateFlow()
+
+
 
     fun validatePassword(password: String): Boolean {
         if (password.length < 8) {
@@ -65,6 +70,10 @@ class CommunicationViewModel(
     }
 
     fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    fun clearState() {
         _uiState.value = RegisterUiState()
     }
 
@@ -72,39 +81,27 @@ class CommunicationViewModel(
         viewModelScope.launch {
             _uiState.value = RegisterUiState(isLoading = true)
             try {
-                // Step 1: Authenticate and get the user ID. This is the "login" check.
-                val idResponse = userRepository.getMyId(username, password)
-
-                if (idResponse.isSuccessful) {
-                    val userId = idResponse.body()
-                    if (userId != null) {
-                        // Step 2: Now that you're authenticated, fetch the complete user object.
-                        val userResponse = userRepository.getUser(userId, username, password)
-                        if (userResponse.isSuccessful) {
-                            // SUCCESS: Store the FULL user object returned from the server.
-                            // This overwrites any previous state with complete, accurate data.
-                            _user.value = userResponse.body()
-                            sessionUsername = username
-                            sessionPassword = password
-                            _loggedIn.value = true
-                            _uiState.value = RegisterUiState(isSuccess = true)
-                        } else {
-                            // This would be an unexpected error (e.g., server issue after auth).
-                            val error = userResponse.errorBody()?.string() ?: "Failed to fetch user details."
-                            _uiState.value = RegisterUiState(error = error)
-                            Log.e("CommunicationViewModel", "User fetch failed: $error")
-                        }
-                    } else {
-                        // This is unlikely but safe to handle (API returns 200 OK but no ID).
-                        _uiState.value = RegisterUiState(error = "User ID was null after successful auth.")
-                        Log.e("CommunicationViewModel", "User ID was null.")
-                    }
-                } else {
+                val userResponse = userRepository.getUser(username, password)
+                if (userResponse.isSuccessful) {
+                    // SUCCESS: Store the FULL user object returned from the server.
+                    // This overwrites any previous state with complete, accurate data.
+                    _user.value = userResponse.body()
+                    sessionUsername = username
+                    sessionPassword = password
+                    _loggedIn.value = true
+                    _uiState.value = RegisterUiState(isSuccess = true)
+                } else if(userResponse.code() == 401) {
                     // This is the most common failure: invalid credentials.
                     val errorMessage = "Invalid username or password"
                     _uiState.value = RegisterUiState(error = errorMessage)
                     Log.e("CommunicationViewModel", "Login failed: $errorMessage")
+                }else{
+                    // This would be an unexpected error (e.g., server issue after auth).
+                    val error = userResponse.errorBody()?.string() ?: "Failed to fetch user details."
+                    _uiState.value = RegisterUiState(error = error)
+                    Log.e("CommunicationViewModel", "User fetch failed: $error")
                 }
+
             } catch (e: Exception) {
                 // This catches network issues like no internet.
                 _uiState.value = RegisterUiState(error = "Network error: ${e.message}")
@@ -122,7 +119,6 @@ class CommunicationViewModel(
                 val response = userRepository.registerUser(userWithCards)
                 if (response.isSuccessful) {
                     _user.value = User(
-                        id = response.body()?.userId,
                         username = response.body()?.username ?: user.username,
                         email = user.email,
                         phoneNumber = user.phoneNumber,
@@ -134,10 +130,13 @@ class CommunicationViewModel(
                     )
                     sessionUsername = user.username
                     sessionPassword = user.passwordHash
-                    _uiState.value = RegisterUiState(isSuccess = true)
+                    _uiState.value = RegisterUiState(
+                        isSuccess = true,
+                        error = "Registration successful"
+                    )
                 } else {
                     val errorMessage = response.errorBody()?.string() ?: "Registration failed"
-                    _uiState.value = RegisterUiState(error = errorMessage)
+                    _uiState.value = RegisterUiState(error = "Registration failed: $errorMessage")
                     Log.e("CommunicationViewModel", "Registration failed: $errorMessage")
                 }
             } catch (e: Exception) {
@@ -159,9 +158,8 @@ class CommunicationViewModel(
         viewModelScope.launch {
             _uiState.value = RegisterUiState(isLoading = true)
             try {
-                val userId = _user.value?.id
-                if (userId != null && _user.value != null && sessionUsername != null && sessionPassword != null) {
-                    val response = userRepository.deleteUser(userId, sessionUsername!!, sessionPassword!!)
+                if (_user.value != null && sessionUsername != null && sessionPassword != null) {
+                    val response = userRepository.deleteUser(sessionUsername!!, sessionPassword!!)
                     if (response.isSuccessful) {
                         _uiState.value = RegisterUiState(isSuccess = true)
                         performLogout()
@@ -171,8 +169,8 @@ class CommunicationViewModel(
                         Log.e("CommunicationViewModel", "Deletion failed: $errorMessage")
                     }
                 } else {
-                    _uiState.value = RegisterUiState(error = "User loged out")
-                    Log.e("CommunicationViewModel", "User loged out or ID not found for delition")
+                    _uiState.value = RegisterUiState(error = "User logged out")
+                    Log.e("CommunicationViewModel", "User logged out or ID not found for deletion")
                 }
             } catch (e: Exception) {
                 _uiState.value = RegisterUiState(error = "Network error: ${e.message}")
@@ -185,23 +183,25 @@ class CommunicationViewModel(
         viewModelScope.launch {
             _uiState.value = RegisterUiState(isLoading = true)
             try {
-                val userId = _user.value?.id
-                if (userId != null && _user.value != null && sessionUsername != null && sessionPassword != null) {
-                    val response = userRepository.updateUser(userId, sessionUsername!!, sessionPassword!!, newUser)
+                if (_user.value != null && sessionUsername != null && sessionPassword != null) {
+                    val response = userRepository.updateUser(sessionUsername!!, sessionPassword!!, newUser)
                     if (response.isSuccessful) {
                         _user.value = response.body()
                         if (!newUser.passwordHash.isNullOrBlank()){
                             sessionPassword = newUser.passwordHash
                         }
-                        _uiState.value = RegisterUiState(isSuccess = true)
+                        _uiState.value = RegisterUiState(
+                            isSuccess = true,
+                            error = "Update successful"
+                        )
                     } else {
                         val errorMessage = response.errorBody()?.string()
                         _uiState.value = RegisterUiState(error = errorMessage ?: "Update failed")
                         Log.e("CommunicationViewModel", "Update failed: $errorMessage")
                     }
                 } else {
-                    _uiState.value = RegisterUiState(error = "User loged out")
-                    Log.e("CommunicationViewModel", "User loged out or ID not found for update")
+                    _uiState.value = RegisterUiState(error = "User logged out")
+                    Log.e("CommunicationViewModel", "User logged out or ID not found for update")
                 }
             } catch (e: Exception) {
                 _uiState.value = RegisterUiState(error = "Network error: ${e.message}")
@@ -212,8 +212,7 @@ class CommunicationViewModel(
 
     fun syncCards(cards: List<Card>) {
         viewModelScope.launch {
-            val userId = _user.value?.id
-            if (userId == null || sessionUsername == null || sessionPassword == null) {
+            if (sessionUsername == null || sessionPassword == null) {
                 Log.w("CommunicationViewModel", "Sync failed: User not logged in.")
                 _uiState.value = RegisterUiState(error = "You must be logged in to sync cards.")
                 return@launch
@@ -222,14 +221,16 @@ class CommunicationViewModel(
             _uiState.value = RegisterUiState(isLoading = true)
             try {
                 val updatedUser = User(
-                    id = userId,
                     username = sessionUsername!!,
                     cards = cards
                 )
-                val response = userRepository.updateUser(userId, sessionUsername!!, sessionPassword!!, updatedUser)
+                val response = userRepository.updateUser(sessionUsername!!, sessionPassword!!, updatedUser)
                 if (response.isSuccessful) {
                     _user.value = response.body()
-                    _uiState.value = RegisterUiState(isSuccess = true)
+                    _uiState.value = RegisterUiState(
+                        isSuccess = true,
+                        error = "Cards synced successfully"
+                    )
                     Log.d("CommunicationViewModel", "Cards synced successfully")
                 } else {
                     val errorMessage = response.errorBody()?.string() ?: "Cards sync failed"
@@ -247,16 +248,18 @@ class CommunicationViewModel(
         viewModelScope.launch {
             _uiState.value = RegisterUiState(isLoading = true)
             try {
-                val userId = _user.value?.id
-                if (userId != null && _user.value != null && sessionUsername != null && sessionPassword != null) {
-                    val response = userRepository.verifyUser(userId, sessionUsername!!, sessionPassword!!,
+                if (_user.value != null && sessionUsername != null && sessionPassword != null) {
+                    val response = userRepository.verifyUser(sessionUsername!!, sessionPassword!!,
                         VerificationRequest(code, VerificationType.EMAIL))
                     if (response.isSuccessful) {
                         Log.d("CommunicationViewModel", "Email verification successful")
-                        val userResponse = userRepository.getUser(userId, sessionUsername!!, sessionPassword!!)
+                        val userResponse = userRepository.getUser(sessionUsername!!, sessionPassword!!)
                         if (userResponse.isSuccessful) {
                             _user.value = userResponse.body()
-                            _uiState.value = RegisterUiState(isSuccess = true)
+                            _uiState.value = RegisterUiState(
+                                isSuccess = true,
+                                error = "Email verification successful"
+                            )
                         } else {
                             val errorMessage = userResponse.errorBody()?.string() ?: "Failed to fetch user details."
                             _uiState.value = RegisterUiState(error = errorMessage)
@@ -268,7 +271,7 @@ class CommunicationViewModel(
                         Log.e("CommunicationViewModel", "Verification failed: $errorMessage")
                     }
                 } else {
-                    _uiState.value = RegisterUiState(error = "User loged out")
+                    _uiState.value = RegisterUiState(error = "User logged out")
                 }
             } catch (e: Exception) {
                 _uiState.value = RegisterUiState(error = "Network error: ${e.message}")
@@ -281,16 +284,18 @@ class CommunicationViewModel(
         viewModelScope.launch {
             _uiState.value = RegisterUiState(isLoading = true)
             try {
-                val userId = _user.value?.id
-                if (userId != null && _user.value != null && sessionUsername != null && sessionPassword != null) {
-                    val response = userRepository.verifyUser(userId, sessionUsername!!, sessionPassword!!,
+                if (_user.value != null && sessionUsername != null && sessionPassword != null) {
+                    val response = userRepository.verifyUser(sessionUsername!!, sessionPassword!!,
                         VerificationRequest(code, VerificationType.PHONE))
                     if (response.isSuccessful) {
                         Log.d("CommunicationViewModel", "Phone verification successful")
-                        val userResponse = userRepository.getUser(userId, sessionUsername!!, sessionPassword!!)
+                        val userResponse = userRepository.getUser(sessionUsername!!, sessionPassword!!)
                         if (userResponse.isSuccessful) {
                             _user.value = userResponse.body()
-                            _uiState.value = RegisterUiState(isSuccess = true)
+                            _uiState.value = RegisterUiState(
+                                isSuccess = true,
+                                error = "Phone verification successful"
+                            )
                         } else {
                             val errorMessage = userResponse.errorBody()?.string() ?: "Failed to fetch user details."
                             _uiState.value = RegisterUiState(error = errorMessage)
@@ -302,7 +307,34 @@ class CommunicationViewModel(
                         Log.e("CommunicationViewModel", "Verification failed: $errorMessage")
                     }
                 } else {
-                    _uiState.value = RegisterUiState(error = "User loged out")
+                    _uiState.value = RegisterUiState(error = "User logged out")
+                }
+            } catch (e: Exception) {
+                _uiState.value = RegisterUiState(error = "Network error: ${e.message}")
+                Log.e("CommunicationViewModel", "Network error: ${e.message}")
+            }
+        }
+    }
+
+    fun resendVerificationCodes() {
+        viewModelScope.launch {
+            _uiState.value = RegisterUiState(isLoading = true)
+            try {
+                if (_user.value != null && sessionUsername != null && sessionPassword != null) {
+                    val response = userRepository.resendVerificationCodes(sessionUsername!!, sessionPassword!!)
+                    if (response.isSuccessful) {
+                        Log.d("CommunicationViewModel", "Verification codes resent successfully")
+                        _uiState.value = RegisterUiState(
+                            isSuccess = true,
+                            error = "Verification codes resent successfully"
+                        )
+                    } else {
+                        val errorMessage = response.errorBody()?.string() ?: "Resend failed"
+                        _uiState.value = RegisterUiState(error = errorMessage)
+                        Log.e("CommunicationViewModel", "Resend failed: $errorMessage")
+                    }
+                } else {
+                    _uiState.value = RegisterUiState(error = "User logged out")
                 }
             } catch (e: Exception) {
                 _uiState.value = RegisterUiState(error = "Network error: ${e.message}")
@@ -322,6 +354,7 @@ class CommunicationViewModel(
                         _uiState.value = RegisterUiState(error = "No recovery options available")
                     } else {
                         _uiState.value = RegisterUiState(isSuccess = true, recoveryOptions = response.body())
+                        _recoveryStep.value = RecoveryStep.CHOOSE_CHANNEL
                     }
                 } else {
                     val errorMessage = response.errorBody()?.string() ?: "Recovery failed"
@@ -348,6 +381,7 @@ class CommunicationViewModel(
                 )
                 if (response.isSuccessful) {
                     _uiState.value = RegisterUiState(isSuccess = true)
+                    _recoveryStep.value = RecoveryStep.ENTER_CODE_AND_RESET
                 } else {
                     val errorMessage = response.errorBody()?.string() ?: "Recovery code sending failed"
                     _uiState.value = RegisterUiState(error = errorMessage)
@@ -375,6 +409,7 @@ class CommunicationViewModel(
                 )
                 if (response.isSuccessful) {
                     _uiState.value = RegisterUiState(isSuccess = true)
+                    _recoveryStep.value = RecoveryStep.SUCCESS
                 } else {
                     val errorMessage = response.errorBody()?.string() ?: "Password reset failed"
                     _uiState.value = RegisterUiState(error = errorMessage)
@@ -385,6 +420,10 @@ class CommunicationViewModel(
                 Log.e("CommunicationViewModel", "Network error: ${e.message}")
             }
         }
+    }
+    fun resetRecoveryStep() {
+        _recoveryStep.value = RecoveryStep.ENTER_USERNAME
+        _uiState.value = RegisterUiState()
     }
 
 }

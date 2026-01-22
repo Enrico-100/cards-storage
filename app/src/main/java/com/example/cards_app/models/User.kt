@@ -5,7 +5,6 @@ import com.example.cards_app.Card
 // Represents the user object for creating a new user.
 // Fields are nullable because not all are required for creation.
 data class User(
-    val id: Long? = null,
     val username: String,
     val email: String? = null,
     val phoneNumber: String? = null,

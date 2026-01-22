@@ -13,31 +13,31 @@ class UserRepository {
 
     private val apiService = RetrofitClient.instance
 
-    suspend fun getMyId(username: String, password: String): Response<Long> {
+    suspend fun getUser(username: String, password: String): Response<User> {
         val authHeader = Credentials.basic(username, password)
-        return apiService.getMyId(authHeader)
-    }
-
-    suspend fun getUser(id: Long, username: String, password: String): Response<User> {
-        val authHeader = Credentials.basic(username, password)
-        return apiService.getUser(authHeader,id)
+        return apiService.getUser(authHeader)
     }
 
     suspend fun registerUser(newUser: User) = apiService.createUser(newUser)
 
-    suspend fun deleteUser(id: Long, username: String, password: String): Response<Unit> {
+    suspend fun deleteUser(username: String, password: String): Response<Unit> {
         val authHeader = Credentials.basic(username, password)
-        return apiService.deleteUser(authHeader,id)
+        return apiService.deleteUser(authHeader)
     }
 
-    suspend fun updateUser(id: Long, username: String, password: String, newUser: User): Response<User> {
+    suspend fun updateUser(username: String, password: String, newUser: User): Response<User> {
         val authHeader = Credentials.basic(username, password)
-        return apiService.updateUser(authHeader, id, newUser)
+        return apiService.updateUser(authHeader, newUser)
     }
 
-    suspend fun verifyUser(id: Long, username: String, password: String, verificationRequest: VerificationRequest): Response<Unit> {
+    suspend fun verifyUser(username: String, password: String, verificationRequest: VerificationRequest): Response<Unit> {
         val authHeader = Credentials.basic(username, password)
-        return apiService.verifyUser(authHeader, id, verificationRequest)
+        return apiService.verifyUser(authHeader, verificationRequest)
+    }
+
+    suspend fun resendVerificationCodes(username: String, password: String): Response<String> {
+        val authHeader = Credentials.basic(username, password)
+        return apiService.resendVerificationCodes(authHeader)
     }
 
     // Recovery methods

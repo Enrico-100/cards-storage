@@ -11,8 +11,8 @@ object RetrofitClient {
 
     // IMPORTANT: This is the local address for the Android emulator to connect to your PC.
     // If your backend is somewhere else, change this URL.
-    private const val BASE_URL = "http://10.0.2.2:8080/"
-
+    private const val BASE_URL = "http://10.0.2.2:8080/"// TODO: Change this to your backend's URL
+    // http://10.0.2.2:8080/ is a special IP address that points to the Android emulator's localhost.
     // This client will be used to make the network requests.
     private val okHttpClient: OkHttpClient by lazy {
         val logging = HttpLoggingInterceptor().apply {

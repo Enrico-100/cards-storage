@@ -14,29 +14,15 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
-import retrofit2.http.Path
 
 interface ApiService {
 
     /**
-     * Gets the ID of the currently authenticated user.
-     * Corresponds to: @GetMapping("/me") in UserController.
-     * Returns the user's ID upon successful authentication.
-     */
-    @GET("api/users/me")
-    suspend fun getMyId(
-        @Header("Authorization") authHeader: String
-    ): Response<Long>
-
-    /**
      * Gets the full user details for the currently authenticated user.
-     * Corresponds to: @GetMapping("/{id}") in UserController.
-     * Note: The Java backend enforces that the {id} must match the authenticated user.
      */
-    @GET("api/users/{id}")
+    @GET("api/users")
     suspend fun getUser(
         @Header("Authorization") authHeader: String,
-        @Path("id") id: Long
     ): Response<User>
 
     /**
@@ -51,56 +37,47 @@ interface ApiService {
     ): Response<UserCreationResponse>
 
     /**
-     * GET /api/users
-     * Gets a list of all users. Requires Admin role.
-     * @return A Response containing a list of all User objects.
-     */
-    @GET("api/users")
-    suspend fun getAllUsers(
-        @Header("Authorization") authHeader: String,
-    ): Response<List<User>>
-
-    /**
-     * PUT /api/users/{id}
+     * PUT /api/users
      * Updates an existing user's information.
-     * The backend enforces that the {id} must match the authenticated user's ID.
-     * @param id The ID of the user to update.
      * @param user A User object containing the fields to be updated (e.g., passwordHash, name, email).
      * @return A Response containing the updated User object.
      */
-    @PUT("api/users/{id}")
+    @PUT("api/users")
     suspend fun updateUser(
         @Header("Authorization") authHeader: String,
-        @Path("id") id: Long,
         @Body user: User
     ): Response<User>
 
     /**
-     * DELETE /api/users/{id}
+     * DELETE /api/users
      * Deletes a user.
-     * The backend enforces that the {id} must match the authenticated user's ID.
-     * @param id The ID of the user to delete.
      * @return A Response with no body, indicating success (200 OK) or failure.
      */
-    @DELETE("api/users/{id}")
+    @DELETE("api/users")
     suspend fun deleteUser(
         @Header("Authorization") authHeader: String,
-        @Path("id") id: Long
     ): Response<Unit> // Response<Unit> is used for empty successful responses
 
     /**
-     * POST /api/users/{id}/verify
+     * POST /api/users/verify
      * Submits a verification code for a user.
-     * @param id The ID of the user to verify.
      * @param verificationRequest A body containing the 'type' and 'code' for verification.
      * @return A Response containing a success message string.
      */
-    @POST("api/users/{id}/verify")
+    @POST("api/users/verify")
     suspend fun verifyUser(
         @Header("Authorization") authHeader: String,
-        @Path("id") id: Long,
         @Body verificationRequest: VerificationRequest
     ): Response<Unit>
+
+    /**
+     * POST /api/users/resend-codes
+     * Resends verification codes to a user for unverified fields.
+     */
+    @POST("api/users/resend-codes")
+    suspend fun resendVerificationCodes(
+        @Header("Authorization") authHeader: String
+    ): Response<String>
 
     /**
      * POST /api/recovery/initiate

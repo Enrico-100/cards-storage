@@ -63,14 +63,25 @@ class AccountScreen {
         }
 
         uiState.error?.let {
-            AlertDialog(
-                onDismissRequest = { communicationViewModel.clearError() },
-                title = { Text("Error") },
-                text = { Text(it) },
-                confirmButton = {
-                    TextButton(onClick = { communicationViewModel.clearError() }) { Text("OK") }
-                }
-            )
+            if (uiState.isSuccess){
+                AlertDialog(
+                    onDismissRequest = { communicationViewModel.clearError() },
+                    title = { Text("Message") },
+                    text = { Text(it) },
+                    confirmButton = {
+                        TextButton(onClick = { communicationViewModel.clearError() }) { Text("OK") }
+                    }
+                )
+            } else {
+                AlertDialog(
+                    onDismissRequest = { communicationViewModel.clearError() },
+                    title = { Text("Error") },
+                    text = { Text(it) },
+                    confirmButton = {
+                        TextButton(onClick = { communicationViewModel.clearError() }) { Text("OK") }
+                    }
+                )
+            }
         }
         
         if (user == null) {
@@ -115,6 +126,7 @@ class AccountScreen {
                                 type = "Email",
                                 target = user!!.email,
                                 onVerifyClick = { code -> communicationViewModel.verifyEmail(code) },
+                                onResendClick = { communicationViewModel.resendVerificationCodes() },
                                 isVerifying = uiState.isLoading
                             )
                             Spacer(modifier = Modifier.height(16.dp))
@@ -127,6 +139,7 @@ class AccountScreen {
                                 type = "Phone",
                                 target = user!!.phoneNumber,
                                 onVerifyClick = { code -> communicationViewModel.verifyPhone(code) },
+                                onResendClick = { communicationViewModel.resendVerificationCodes() },
                                 isVerifying = uiState.isLoading
                             )
                             Spacer(modifier = Modifier.height(16.dp))
@@ -143,6 +156,7 @@ class AccountScreen {
                             },
                             communicationViewModel = communicationViewModel
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
 
                 }
@@ -150,7 +164,10 @@ class AccountScreen {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // --- Action Buttons ---
-                Button(onClick = { communicationViewModel.performLogout() }) {
+                Button(
+                    onClick = { communicationViewModel.performLogout() },
+                    modifier = Modifier.padding(start = 16.dp)
+                ) {
                     Text("Log out")
                 }
 
@@ -158,7 +175,8 @@ class AccountScreen {
 
                 Button(
                     onClick = { communicationViewModel.deleteUser() },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.padding(start = 16.dp)
                 ) {
                     Text("Delete Account")
                 }
@@ -179,6 +197,7 @@ class AccountScreen {
         type: String,
         target: String?,
         onVerifyClick: (String) -> Unit,
+        onResendClick: () -> Unit,
         isVerifying: Boolean
     ) {
         var verificationCode by remember { mutableStateOf("") }
@@ -198,6 +217,12 @@ class AccountScreen {
                     "A verification code was sent to $target. Please enter it below.",
                     style = MaterialTheme.typography.bodyMedium
                 )
+                if (type == "Email"){
+                    Text(
+                        "Please check your spam folder.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = verificationCode,
@@ -208,12 +233,22 @@ class AccountScreen {
                     enabled = !isVerifying
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = { onVerifyClick(verificationCode) },
-                    enabled = !isVerifying,
-                    modifier = Modifier.align(Alignment.End)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Verify")
+                    Button(
+                        onClick = { onResendClick() },
+                        enabled = !isVerifying
+                    ){
+                        Text("Resend code")
+                    }
+                    Button(
+                        onClick = { onVerifyClick(verificationCode) },
+                        enabled = !isVerifying
+                    ) {
+                        Text("Verify")
+                    }
                 }
             }
         }
@@ -235,9 +270,19 @@ class AccountScreen {
         var newPassword by remember { mutableStateOf("") }
         var showPassword by remember { mutableStateOf(false) }
         var clientSideError by remember { mutableStateOf<String?>(null) }
+        val uiState by communicationViewModel.uiState.collectAsState()
+
+
+        LaunchedEffect(uiState.isSuccess) {
+            if (uiState.isSuccess) {
+                newPassword = ""
+                communicationViewModel.clearState()
+            }
+        }
 
 
         // Show client-side validation errors in a dialog
+        @Suppress("assignedValueIsNeverRead")
         clientSideError?.let {
             AlertDialog(
                 onDismissRequest = { clientSideError = null },
@@ -278,6 +323,7 @@ class AccountScreen {
                     }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+                @Suppress("assignedValueIsNeverRead")
                 Button(
                     onClick = {
                         // --- Client-side validation ---
@@ -291,19 +337,17 @@ class AccountScreen {
                         } else if(newPassword.isBlank()|| communicationViewModel.validatePassword(newPassword)){
                             // Validation passed, create the updated User object
                             val updatedUser = User(
-                                id = currentUser.id, // ID is needed for the backend to find the user
                                 username = currentUser.username, // Username is immutable
                                 name = name.takeIf { it.isNotBlank() },
                                 email = email.takeIf { it.isNotBlank() },
                                 phoneNumber = phoneNumber.takeIf { it.isNotBlank() },
-                                passwordHash = newPassword.takeIf { it.isNotBlank() } // Send new password only if it's not blank
-                                
+                                passwordHash = newPassword.takeIf { it.isNotBlank() }, // Send new password only if it's not blank
+                                cards = currentUser.cards
                             )
                             onUpdateClick(updatedUser)
                         }
                     },
-                    enabled = !isLoading,
-                    modifier = Modifier.align(Alignment.End)
+                    enabled = !isLoading
                 ) {
                     Text("Update")
                 }
