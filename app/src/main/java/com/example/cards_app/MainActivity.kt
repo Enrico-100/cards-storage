@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DropdownMenu
@@ -85,6 +83,7 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     when (numberOfScreen) {
                         0 -> {//main cards screen
+                            /*
                             LazyColumn(
                                 modifier = Modifier
                                     .padding(innerPadding)
@@ -114,6 +113,28 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                             }
+                            */
+                            Column(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize()
+                            ) {
+                                myCards.Cards2(
+                                    cards = cards,
+                                    onEditClick = {
+                                        viewModel.navigateTo(1, true, it)
+                                    },
+                                    noCardsYetClick = {
+                                        viewModel.navigateTo(1)
+                                    },
+                                    onDeleteClick = {
+                                        viewModel.deleteCardFromStack(it)
+                                    },
+                                    onRegenerate = {
+                                        viewModel.regenerateCardImage(it, this@MainActivity)
+                                    }
+                                )
+                            }
                         }
                         1 -> {//add card / modify card screen
                             Column(
@@ -126,7 +147,10 @@ class MainActivity : ComponentActivity() {
                                     onButtonClick = {
                                         viewModel.navigateTo(0)
                                     },
-                                    card = if (editState) currentCard else null
+                                    card = if (editState) currentCard else null,
+                                    onCancelClick = {
+                                        viewModel.navigateBack()
+                                    }
                                 )
                             }
                         }

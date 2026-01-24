@@ -134,7 +134,7 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
             try {
                 val generator = BarcodeGeneratorAndSaver()
                 // 2. Generate the Bitmap (Heavy CPU task)
-                val bitmap = generator.generateBarCode(card.number)
+                val bitmap = generator.generateBarCode(card.number, card.codeType)
                 // 3. Save to File (Heavy I/O task)
                 // Using the card ID as the filename keeps it unique and consistent
                 val newPath = generator.saveBitmapToFile(context, bitmap, card.id)

@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
@@ -17,8 +20,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -202,6 +207,182 @@ class MyCards {
                 onDeleteClick = onDeleteClick,
                 onRegenerate = { onRegenerate(it) }
             )
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun Cards2(
+        cards: List<Card>,
+        onEditClick: (Card) -> Unit = {},
+        onDeleteClick: (Card) -> Unit = {},
+        onRegenerate: (Card) -> Unit = {},
+        noCardsYetClick: () -> Unit = {}
+    ){
+        val showCard = remember { mutableStateOf(false) }
+        val showEditDialog = remember { mutableStateOf(false) }
+        val showDeleteDialog = remember { mutableStateOf(false) }
+        val currentCardIndex = remember { mutableStateOf<Int?>(null) }
+        // This will allow the sheet to expand to full height
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true
+        )
+        if (showEditDialog.value && currentCardIndex.value != null) {
+            onEditClick(cards[currentCardIndex.value!!])
+        }
+        if (showDeleteDialog.value && currentCardIndex.value != null) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog.value = false },
+                title = { Text("Delete Card") },
+                text = { Text("Are you sure you want to delete this card?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showCard.value = false
+                            showDeleteDialog.value = false
+                            onDeleteClick(cards[currentCardIndex.value!!])
+                        }
+                    ) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDeleteDialog.value = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(2),
+            modifier = Modifier.padding(7.dp)
+        ){
+            items(count = cards.size) { cardIndex ->
+                val card = cards[cardIndex]
+                Card(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(7.dp)
+                        .clickable(onClick = {
+                            showCard.value = true
+                            currentCardIndex.value = cardIndex
+                        }),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(card.color.toColorInt())
+                    )
+                ) {
+                    val color = Color(card.color.toColorInt())
+                    val blackOrWhite = if (color.luminance() > 0.5) Color.Black else Color.White
+                    Text(
+                        text = card.name,
+                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
+                        color = blackOrWhite
+                    )
+                    Text(
+                        text = card.nameOfCard,
+                        modifier = Modifier.padding(8.dp),
+                        color = blackOrWhite
+                    )
+                }
+            }
+            item(
+                span = StaggeredGridItemSpan.FullLine
+            ) {
+                NoCardsYet(
+                    onCardClick = noCardsYetClick,
+                    text = if (cards.isEmpty()) "No cards yet, add a card to get started." else "Add a card."
+                )
+            }
+        }
+        if (showCard.value) {
+            val card = cards[currentCardIndex.value ?: return]
+            ModalBottomSheet(
+                onDismissRequest = { showCard.value = false },
+                containerColor = Color(card.color.toColorInt()),
+                modifier = Modifier.fillMaxSize()
+                    .padding(top = 88.dp ),
+                sheetState = sheetState
+            ) {
+                Column(
+                    modifier = Modifier.padding(start = 16.dp)
+                ) {
+                    val color = Color(card.color.toColorInt())
+                    val blackOrWhite = if (color.luminance() > 0.5) Color.Black else Color.White
+                    Row {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = card.name,
+                                modifier = Modifier.padding(top = 8.dp),
+                                fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                                color = blackOrWhite
+                            )
+                            Text(
+                                text = card.nameOfCard,
+                                fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                                color = blackOrWhite
+                            )
+                            Text(
+                                text = card.number,
+                                fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                                color = blackOrWhite
+                            )
+                        }
+                        IconButton(
+                            onClick = { showEditDialog.value = true },
+
+                            ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Edit,
+                                contentDescription = "Edit Card",
+                                tint = blackOrWhite
+                            )
+                        }
+                        IconButton(
+                            onClick = { showDeleteDialog.value = true },
+
+                            ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Delete,
+                                contentDescription = "Delete Card",
+                                tint = blackOrWhite
+                            )
+                        }
+                    }
+
+                    // Display the generated barcode image if the path exists
+                    if (card.picture != null) {
+                        Log.d("DisplayImage", "Attempting to load image from: ${card.picture}")
+                        AsyncImage(
+                            model = card.picture, // <<<< Use Coil's AsyncImage
+                            // Pass the File object from the path
+                            contentDescription = "Barcode for ${card.nameOfCard}",
+                            modifier = Modifier
+                                .fillMaxWidth() // Let the image take available width
+                                .padding(vertical = 8.dp)
+                                .padding(end = 16.dp),
+                            contentScale = ContentScale.FillWidth, // Scale the image to fit within bounds
+                            onError = {
+                                Log.e(
+                                    "ImageLoad",
+                                    "AsyncImage failed to load image. Regenerating..."
+                                )
+                                onRegenerate(card)
+                            }
+                        )
+                    } else {
+                        // Optional: Show a placeholder or message if no barcode image
+                        Text(
+                            text = "No barcode image available.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
         }
     }
 }
