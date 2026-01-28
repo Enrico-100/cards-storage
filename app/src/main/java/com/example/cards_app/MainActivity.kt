@@ -60,11 +60,12 @@ class MainActivity : ComponentActivity() {
                     null
                 }
             }
+            var template by remember { mutableStateOf<TemplateCard?>(null) }
 
 
             val dropdownMenuItems: List<DropdownAction> = listOf(
                 DropdownAction("Your cards", onClick = { viewModel.navigateTo(0) }, icon = R.drawable.outline_account_balance_wallet_24),
-                DropdownAction("Add card", onClick = { viewModel.navigateTo(1) }, icon = R.drawable.outline_add_card_24),
+                DropdownAction("Add card", onClick = { viewModel.navigateTo(3) }, icon = R.drawable.outline_add_card_24),
                 DropdownAction("Account", onClick = { viewModel.navigateTo(2) }, icon = R.drawable.outline_account_circle_24)
             )
 
@@ -74,6 +75,7 @@ class MainActivity : ComponentActivity() {
 
                 BackHandler(screenStack.size > 1 || screenStack.last() != 0) {
                     viewModel.navigateBack()
+                    template = null
                 }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -83,37 +85,6 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     when (numberOfScreen) {
                         0 -> {//main cards screen
-                            /*
-                            LazyColumn(
-                                modifier = Modifier
-                                    .padding(innerPadding)
-                                    .fillMaxSize()
-                            ) {
-                                items(cards) { card ->
-                                    myCards.Cards(
-                                        card = card,
-                                        onCardClick = {
-                                            viewModel.navigateTo(3, false,card)
-                                        },
-                                        onEditClick = {
-                                            viewModel.navigateTo(1, true, card)
-                                        },
-                                        onDeleteClick = {
-                                            viewModel.deleteCardFromStack(card)
-                                        },
-                                        onRegenerate = {
-                                            viewModel.regenerateCardImage(it, this@MainActivity)
-                                        }
-                                    )
-                                }
-                                item {
-                                    myCards.NoCardsYet(
-                                        onCardClick = { viewModel.navigateTo(1) },
-                                        text = if (cards.isEmpty()) "No cards yet, add a card to get started." else "Add a card."
-                                    )
-                                }
-                            }
-                            */
                             Column(
                                 modifier = Modifier
                                     .padding(innerPadding)
@@ -125,7 +96,7 @@ class MainActivity : ComponentActivity() {
                                         viewModel.navigateTo(1, true, it)
                                     },
                                     noCardsYetClick = {
-                                        viewModel.navigateTo(1)
+                                        viewModel.navigateTo(3)
                                     },
                                     onDeleteClick = {
                                         viewModel.deleteCardFromStack(it)
@@ -146,11 +117,14 @@ class MainActivity : ComponentActivity() {
                                     viewModel = viewModel,
                                     onButtonClick = {
                                         viewModel.navigateTo(0)
+                                        template = null
                                     },
                                     card = if (editState) currentCard else null,
                                     onCancelClick = {
                                         viewModel.navigateBack()
-                                    }
+                                        template = null
+                                    },
+                                    template = if (editState) null else template
                                 )
                             }
                         }
@@ -173,24 +147,23 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-                        3 -> {//show one card only screen
+                        3 -> {// template screen
+                            @Suppress("assignedValueIsNeverRead")
                             Column(
                                 modifier = Modifier
                                     .padding(innerPadding)
                                     .fillMaxSize()
                             ) {
-                                myCards.ShowCard(
-                                    card = currentCard,
-                                    onEditClick = {
-                                        viewModel.navigateTo(1, true, currentCard)
+                                TemplateScreen().Template(
+                                    onTemplateClick = {
+                                        template = it
+                                        viewModel.navigateTo(1)
                                     },
-                                    onDeleteClick = {
-                                        viewModel.deleteCardFromStack(currentCard)
-                                    },
-                                    onRegenerate = {
-                                        viewModel.regenerateCardImage(it, this@MainActivity)
+                                    onCustomClick = {
+                                        viewModel.navigateTo(1)
                                     }
                                 )
+
                             }
                         }
                         4 -> {//sign up screen
@@ -232,6 +205,9 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
+                        }
+                        else -> {
+                            viewModel.navigateBack()
                         }
                     }
                 }

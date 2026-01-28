@@ -35,6 +35,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -72,12 +74,14 @@ import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 
 
 class AddCard {
+    @Suppress("assignedValueIsNeverRead")
     @Composable
     fun MyAddCard(
         viewModel: MainViewModel,
         onButtonClick: () -> Unit = {},
         card: Card? = null,
-        onCancelClick: () -> Unit = {}
+        onCancelClick: () -> Unit = {},
+        template: TemplateCard? = null
     ) {
         val context = LocalContext.current
         val id by remember(card?.id) { mutableStateOf(card?.id ?: UUID.randomUUID().toString()) }
@@ -86,17 +90,15 @@ class AddCard {
         val savePath = remember(card?.id) { mutableStateOf(card?.picture) }
         var number by remember(card?.id) { mutableStateOf(card?.number ?: "") }
         var name by remember(card?.id) { mutableStateOf(card?.name ?: "") }
-        var nameOfCard by remember(card?.id) { mutableStateOf(card?.nameOfCard ?: "") }
+        var nameOfCard by remember(card?.id) { mutableStateOf(card?.nameOfCard ?: template?.nameOfCard ?: "") }
         val colors = listOf(
             Color.Red,
             Color.Green,
             Color.Blue,
-            Color.Yellow,
             Color.Magenta,
-            Color.Cyan,
             Color.Gray,
         )
-        var color by remember(card?.id) { mutableStateOf(if (card != null) Color(card.color.toColorInt()) else colors.first()) }
+        var color by remember(card?.id) { mutableStateOf(if (card != null) Color(card.color.toColorInt()) else if (template != null) Color(template.color.toColorInt()) else colors.first()) }
         var validationMessage by remember(card?.id) { mutableStateOf("") }
         var showValidationMessage by remember(card?.id) { mutableStateOf(false) }
         var showColorPicker by remember { mutableStateOf(false) }
@@ -121,13 +123,13 @@ class AddCard {
             }
         )
 
-        LaunchedEffect(true) {
-            if (!hasCameraPermission) {
-                permissionLuncher.launch(Manifest.permission.CAMERA)
-            } else {
-                showScanner = true
-            }
-        }
+//        LaunchedEffect(true) {
+//            if (!hasCameraPermission) {
+//                permissionLuncher.launch(Manifest.permission.CAMERA)
+//            } else {
+//                showScanner = true
+//            }
+//        }
 
         if (showScanner && hasCameraPermission) {
             Box(
@@ -182,11 +184,15 @@ class AddCard {
                                 } else {
                                     permissionLuncher.launch(Manifest.permission.CAMERA)
                                 }
-                            }
+                            },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
                         ) {
                             Icon(
                                 imageVector = Icons.Default.QrCodeScanner,
-                                contentDescription = "Scan code"
+                                contentDescription = "Scan code",
+                                tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     }
@@ -226,7 +232,7 @@ class AddCard {
                     item {
                         val isCustomColorSelected = !colors.contains(color)
                         ColorCircle(
-                            color = Color.DarkGray,
+                            color = if (isCustomColorSelected) color else Color.DarkGray,
                             isCustomPicker = true,
                             isSelected = isCustomColorSelected,
                             onClick = {
@@ -241,7 +247,7 @@ class AddCard {
                 ) {
                     Button(
                         onClick = {
-                            val colorString = color.toHexString()
+                            val colorString = template?.color ?: color.toHexString()
                             if (number.isEmpty()) {
                                 validationMessage += "Number cannot be empty.\n"
                             }
@@ -325,6 +331,13 @@ class AddCard {
             }
             if (showColorPicker) {
                 val initialColor = remember{ color }
+                val pickerInitialColor = remember{
+                    if (colors.contains(initialColor)) {
+                        Color.White
+                    } else {
+                        initialColor
+                    }
+                }
                 Dialog(
                     onDismissRequest = {
                         color = initialColor
@@ -334,7 +347,12 @@ class AddCard {
                     Card(
                         shape = RoundedCornerShape(16.dp),
                     ) {
+
                         val controller = rememberColorPickerController()
+                        LaunchedEffect(controller) {
+                            controller.selectByColor(pickerInitialColor, false)
+                        }
+
                         LazyColumn(
                             modifier = Modifier.padding(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -410,7 +428,7 @@ class AddCard {
     fun ColorCircle(
         color: Color,
         isSelected: Boolean = false,
-        isCustomPicker : Boolean = false,
+        isCustomPicker: Boolean = false,
         onClick: () -> Unit = {},
     ) {
         val rainbowBrush = Brush.sweepGradient(
@@ -430,18 +448,14 @@ class AddCard {
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(
-                    if (isCustomPicker) rainbowBrush else SolidColor(color)
+                    if (isCustomPicker && isSelected) SolidColor(color) else if(isCustomPicker) rainbowBrush else SolidColor(color)
                 ),
             contentAlignment = Alignment.Center
         ) {
             IconButton(
                 onClick = { onClick() }
             ) {
-                val iconColor = if (isCustomPicker) {
-                    Color.White
-                } else {
-                    if (color.luminance() > 0.5) Color.Black else Color.White
-                }
+                val iconColor = if (color.luminance() > 0.5) Color.Black else Color.White
                 if (isSelected) {
                     Icon(
                         imageVector = Icons.Filled.Check,
@@ -455,11 +469,10 @@ class AddCard {
     }
 
     fun Color.toHexString(): String {
-        val alpha = (this.alpha * 255).toInt()
         val red = (this.red * 255).toInt()
         val green = (this.green * 255).toInt()
         val blue = (this.blue * 255).toInt()
-        return String.format("#%02X%02X%02X%02X", alpha, red, green, blue)
+        return String.format("#%02X%02X%02X", red, green, blue)
     }
 
     @Composable
