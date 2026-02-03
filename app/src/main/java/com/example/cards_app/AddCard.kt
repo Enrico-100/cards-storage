@@ -12,14 +12,17 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,6 +36,11 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -49,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -57,6 +66,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -74,6 +84,7 @@ import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 
 
 class AddCard {
+    @OptIn(ExperimentalMaterial3Api::class)
     @Suppress("assignedValueIsNeverRead")
     @Composable
     fun MyAddCard(
@@ -81,7 +92,6 @@ class AddCard {
         onButtonClick: () -> Unit = {},
         card: Card? = null,
         onCancelClick: () -> Unit = {},
-        template: TemplateCard? = null
     ) {
         val context = LocalContext.current
         val id by remember(card?.id) { mutableStateOf(card?.id ?: UUID.randomUUID().toString()) }
@@ -90,7 +100,7 @@ class AddCard {
         val savePath = remember(card?.id) { mutableStateOf(card?.picture) }
         var number by remember(card?.id) { mutableStateOf(card?.number ?: "") }
         var name by remember(card?.id) { mutableStateOf(card?.name ?: "") }
-        var nameOfCard by remember(card?.id) { mutableStateOf(card?.nameOfCard ?: template?.nameOfCard ?: "") }
+        var nameOfCard by remember(card?.id) { mutableStateOf(card?.nameOfCard ?: "") }
         val colors = listOf(
             Color.Red,
             Color.Green,
@@ -98,7 +108,7 @@ class AddCard {
             Color.Magenta,
             Color.Gray,
         )
-        var color by remember(card?.id) { mutableStateOf(if (card != null) Color(card.color.toColorInt()) else if (template != null) Color(template.color.toColorInt()) else colors.first()) }
+        var color by remember(card?.id) { mutableStateOf(if (card != null) Color(card.color.toColorInt()) else colors.first()) }
         var validationMessage by remember(card?.id) { mutableStateOf("") }
         var showValidationMessage by remember(card?.id) { mutableStateOf(false) }
         var showColorPicker by remember { mutableStateOf(false) }
@@ -206,15 +216,117 @@ class AddCard {
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                OutlinedTextField(
-                    value = nameOfCard,
-                    onValueChange = {
-                        nameOfCard = it
-                    },
-                    label = { Text("Name of Card") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                var exposed by remember { mutableStateOf(false) }
+                val filteredList = remember(nameOfCard, Templates.list) {
+                    if (nameOfCard.isEmpty()){
+                        Templates.list
+                    }else {
+                        Templates.list.filter{
+                            it.nameOfCard.contains(nameOfCard, ignoreCase = true)
+                        }
+                    }
+                }
+                ExposedDropdownMenuBox(
+                    expanded = exposed && filteredList.isNotEmpty(),
+                    onExpandedChange = {}
+                ) {
+                    OutlinedTextField(
+                        value = nameOfCard,
+                        onValueChange = {
+                            nameOfCard = it
+                            exposed = true
+                        },
+                        label = { Text("Type of Card") },
+                        modifier = Modifier.fillMaxWidth()
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true)
+                            .onFocusChanged { focusState ->
+                                exposed = focusState.isFocused
+                            },
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    exposed = !exposed
+                                },
+                            ) {
+                                ExposedDropdownMenuDefaults.TrailingIcon(
+                                    expanded = exposed
+                                )
+                            }
+                        }
+                    )
+                    if (filteredList.isNotEmpty()) {
+                        ExposedDropdownMenu(
+                            expanded = exposed,
+                            onDismissRequest = {
+                                exposed = false
+                            }
+                        ) {
+                            filteredList.forEach { template ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(Color(template.color.toColorInt()))
+
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(
+                                                        if (Color(template.color.toColorInt()).luminance() > 0.5){
+                                                            Brush.horizontalGradient(
+                                                                colors = listOf(
+                                                                    Color.Black.copy(alpha = 0.7f),
+                                                                    Color.Transparent
+                                                                )
+                                                            )
+                                                        }else{
+                                                            Brush.horizontalGradient(
+                                                                colors = listOf(
+                                                                    Color.Transparent,
+                                                                    Color.Transparent
+                                                                )
+                                                            )
+                                                        }
+                                                    )
+                                                    .padding(8.dp)
+                                                    .heightIn(max = 50.dp)
+                                            ) {
+                                                Text(
+                                                    text = template.nameOfCard.replaceFirstChar { it.uppercase() },
+                                                    color = Color.White,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                                Image(
+                                                    painter = painterResource(id = template.logoResId),
+                                                    contentDescription = "${template.nameOfCard} Logo",
+                                                    modifier = Modifier.fillMaxHeight()
+
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        nameOfCard = template.nameOfCard.replaceFirstChar { it.uppercase() }
+                                        exposed = false
+                                    },
+                                    modifier = Modifier.padding(4.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                val matchedTemplate by remember(nameOfCard) { mutableStateOf( Templates.list.find { it.nameOfCard.equals(nameOfCard, ignoreCase = true) })}
+                LaunchedEffect(matchedTemplate) {
+                    color = if (matchedTemplate != null){
+                        Color(matchedTemplate!!.color.toColorInt())
+                    }else{
+                        colors.first()
+                    }
+                }
                 LazyRow(
                     modifier = Modifier.padding(top = 16.dp)
                 ) {
@@ -225,8 +337,11 @@ class AddCard {
                             color = colors[it],
                             isSelected = isSelected,
                             onClick = {
-                                color = currentColor
-                            }
+                                if(matchedTemplate == null) {
+                                    color = currentColor
+                                }
+                            },
+
                         )
                     }
                     item {
@@ -236,7 +351,9 @@ class AddCard {
                             isCustomPicker = true,
                             isSelected = isCustomColorSelected,
                             onClick = {
-                                showColorPicker = true
+                                if (matchedTemplate == null) {
+                                    showColorPicker = true
+                                }
                             }
                         )
                     }
@@ -247,7 +364,6 @@ class AddCard {
                 ) {
                     Button(
                         onClick = {
-                            val colorString = template?.color ?: color.toHexString()
                             if (number.isEmpty()) {
                                 validationMessage += "Number cannot be empty.\n"
                             }
@@ -288,9 +404,9 @@ class AddCard {
                                 number = number,
                                 name = name,
                                 nameOfCard = nameOfCard,
+                                codeType = codeType.intValue,
                                 picture = savePath.value.toString(),
-                                color = colorString,
-                                codeType = codeType.intValue
+                                color = color.toHexString()
                             )
                             viewModel.addCardAndSave(card, onButtonClick)
                         }

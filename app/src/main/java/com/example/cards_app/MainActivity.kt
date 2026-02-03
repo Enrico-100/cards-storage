@@ -60,12 +60,11 @@ class MainActivity : ComponentActivity() {
                     null
                 }
             }
-            var template by remember { mutableStateOf<TemplateCard?>(null) }
 
 
             val dropdownMenuItems: List<DropdownAction> = listOf(
                 DropdownAction("Your cards", onClick = { viewModel.navigateTo(0) }, icon = R.drawable.outline_account_balance_wallet_24),
-                DropdownAction("Add card", onClick = { viewModel.navigateTo(3) }, icon = R.drawable.outline_add_card_24),
+                DropdownAction("Add card", onClick = { viewModel.navigateTo(1) }, icon = R.drawable.outline_add_card_24),
                 DropdownAction("Account", onClick = { viewModel.navigateTo(2) }, icon = R.drawable.outline_account_circle_24)
             )
 
@@ -75,7 +74,6 @@ class MainActivity : ComponentActivity() {
 
                 BackHandler(screenStack.size > 1 || screenStack.last() != 0) {
                     viewModel.navigateBack()
-                    template = null
                 }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -96,7 +94,7 @@ class MainActivity : ComponentActivity() {
                                         viewModel.navigateTo(1, true, it)
                                     },
                                     noCardsYetClick = {
-                                        viewModel.navigateTo(3)
+                                        viewModel.navigateTo(1)
                                     },
                                     onDeleteClick = {
                                         viewModel.deleteCardFromStack(it)
@@ -117,14 +115,11 @@ class MainActivity : ComponentActivity() {
                                     viewModel = viewModel,
                                     onButtonClick = {
                                         viewModel.navigateTo(0)
-                                        template = null
                                     },
                                     card = if (editState) currentCard else null,
                                     onCancelClick = {
                                         viewModel.navigateBack()
-                                        template = null
-                                    },
-                                    template = if (editState) null else template
+                                    }
                                 )
                             }
                         }
@@ -145,25 +140,6 @@ class MainActivity : ComponentActivity() {
                                         viewModel.navigateTo(6)
                                     }
                                 )
-                            }
-                        }
-                        3 -> {// template screen
-                            @Suppress("assignedValueIsNeverRead")
-                            Column(
-                                modifier = Modifier
-                                    .padding(innerPadding)
-                                    .fillMaxSize()
-                            ) {
-                                TemplateScreen().Template(
-                                    onTemplateClick = {
-                                        template = it
-                                        viewModel.navigateTo(1)
-                                    },
-                                    onCustomClick = {
-                                        viewModel.navigateTo(1)
-                                    }
-                                )
-
                             }
                         }
                         4 -> {//sign up screen

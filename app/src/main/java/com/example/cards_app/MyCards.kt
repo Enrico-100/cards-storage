@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
@@ -112,7 +113,7 @@ class MyCards {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .heightIn(max = 100.dp)
+                            .heightIn(max = 100.dp, min = 50.dp)
                     ) {
                         if (logoResId != null) {
 
@@ -130,48 +131,49 @@ class MyCards {
                                     .background(
                                         brush = Brush.verticalGradient(
                                             colors = listOf(
-                                                Color.Black.copy(alpha = 0.7f),
-                                                Color.Black.copy(alpha = 0.3f)
+                                                Color.Black.copy(alpha = 0.1f),
+                                                Color.Black.copy(alpha = 0.5f)
                                             )
                                         )
                                     )
                                     .matchParentSize()
                             ){
-                                Column{
-                                    val blackOrWhite = Color.White
-                                    Text(
-                                        text = card.name,
-                                        modifier = Modifier.padding(start = 8.dp, top = 8.dp, end = 8.dp),
-                                        color = blackOrWhite
-                                    )
-                                    Text(
-                                        text = card.nameOfCard,
-                                        modifier = Modifier.padding(8.dp),
-                                        color = blackOrWhite
-                                    )
-                                }
+                                Text(
+                                    text = card.name,
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .align(Alignment.BottomStart),
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
                             }
 
                         } else {
-                            Column {
-                                val color = Color(card.color.toColorInt())
-                                val blackOrWhite =
-                                if (color.luminance() > 0.5) Color.Black else Color.White
-                                Text(
-                                    text = card.name,
-                                    modifier = Modifier.padding(
-                                        start = 8.dp,
-                                        top = 8.dp,
-                                        end = 8.dp
-                                    ),
-                                    color = blackOrWhite
-                                )
-                                Text(
-                                    text = card.nameOfCard,
-                                    modifier = Modifier.padding(8.dp),
-                                    color = blackOrWhite
-                                )
+                            val color = Color(card.color.toColorInt())
+                            val blackOrWhite = if (color.luminance() > 0.5) Color.Black else Color.White
+                            val initials = if (card.nameOfCard.split(" ").size >= 2) {
+                                card.nameOfCard.split(" ")
+                                    .mapNotNull { it.firstOrNull()?.uppercase() }
+                                    .take(2)
+                                    .joinToString("")
+                            } else {
+                                card.nameOfCard.take(2).uppercase()
                             }
+                            Text(
+                                text = initials,
+                                modifier = Modifier.align(Alignment.Center),
+                                color = blackOrWhite,
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = card.name,
+                                modifier = Modifier
+                                    .padding(12.dp)
+                                    .align(Alignment.BottomStart),
+                                color = blackOrWhite,
+                                style = MaterialTheme.typography.titleMedium
+                            )
                         }
                     }
                 }
