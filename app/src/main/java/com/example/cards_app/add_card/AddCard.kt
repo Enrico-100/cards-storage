@@ -1,4 +1,4 @@
-package com.example.cards_app
+package com.example.cards_app.add_card
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -35,7 +35,6 @@ import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -74,14 +73,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
+import com.example.cards_app.Card
+import com.example.cards_app.MainViewModel
 import com.github.skydoves.colorpicker.compose.BrightnessSlider
-import com.google.mlkit.vision.barcode.common.Barcode.FORMAT_CODE_128
-import java.util.UUID
-
 import com.github.skydoves.colorpicker.compose.ColorEnvelope
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
-
+import com.google.mlkit.vision.barcode.common.Barcode
+import java.util.UUID
 
 class AddCard {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -96,7 +95,8 @@ class AddCard {
         val context = LocalContext.current
         val id by remember(card?.id) { mutableStateOf(card?.id ?: UUID.randomUUID().toString()) }
         val bitmap = remember(card?.id) { mutableStateOf<Bitmap?>(null) }
-        val codeType = remember(card?.id) { mutableIntStateOf(card?.codeType ?: FORMAT_CODE_128) }
+        val codeType =
+            remember(card?.id) { mutableIntStateOf(card?.codeType ?: Barcode.FORMAT_CODE_128) }
         val savePath = remember(card?.id) { mutableStateOf(card?.picture) }
         var number by remember(card?.id) { mutableStateOf(card?.number ?: "") }
         var name by remember(card?.id) { mutableStateOf(card?.name ?: "") }
@@ -218,10 +218,10 @@ class AddCard {
                 )
                 var exposed by remember { mutableStateOf(false) }
                 val filteredList = remember(nameOfCard, Templates.list) {
-                    if (nameOfCard.isEmpty()){
+                    if (nameOfCard.isEmpty()) {
                         Templates.list
-                    }else {
-                        Templates.list.filter{
+                    } else {
+                        Templates.list.filter {
                             it.nameOfCard.contains(nameOfCard, ignoreCase = true)
                         }
                     }
@@ -238,7 +238,10 @@ class AddCard {
                         },
                         label = { Text("Type of Card") },
                         modifier = Modifier.fillMaxWidth()
-                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true)
+                            .menuAnchor(
+                                ExposedDropdownMenuAnchorType.PrimaryEditable,
+                                true
+                            )
                             .onFocusChanged { focusState ->
                                 exposed = focusState.isFocused
                             },
@@ -276,14 +279,14 @@ class AddCard {
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .background(
-                                                        if (Color(template.color.toColorInt()).luminance() > 0.5){
+                                                        if (Color(template.color.toColorInt()).luminance() > 0.5) {
                                                             Brush.horizontalGradient(
                                                                 colors = listOf(
                                                                     Color.Black.copy(alpha = 0.7f),
                                                                     Color.Transparent
                                                                 )
                                                             )
-                                                        }else{
+                                                        } else {
                                                             Brush.horizontalGradient(
                                                                 colors = listOf(
                                                                     Color.Transparent,
@@ -310,7 +313,8 @@ class AddCard {
                                         }
                                     },
                                     onClick = {
-                                        nameOfCard = template.nameOfCard.replaceFirstChar { it.uppercase() }
+                                        nameOfCard =
+                                            template.nameOfCard.replaceFirstChar { it.uppercase() }
                                         exposed = false
                                     },
                                     modifier = Modifier.padding(4.dp)
@@ -319,11 +323,18 @@ class AddCard {
                         }
                     }
                 }
-                val matchedTemplate by remember(nameOfCard) { mutableStateOf( Templates.list.find { it.nameOfCard.equals(nameOfCard, ignoreCase = true) })}
+                val matchedTemplate by remember(nameOfCard) {
+                    mutableStateOf(Templates.list.find {
+                        it.nameOfCard.equals(
+                            nameOfCard,
+                            ignoreCase = true
+                        )
+                    })
+                }
                 LaunchedEffect(matchedTemplate) {
-                    color = if (matchedTemplate != null){
+                    color = if (matchedTemplate != null) {
                         Color(matchedTemplate!!.color.toColorInt())
-                    }else{
+                    } else {
                         colors.first()
                     }
                 }
@@ -337,12 +348,12 @@ class AddCard {
                             color = colors[it],
                             isSelected = isSelected,
                             onClick = {
-                                if(matchedTemplate == null) {
+                                if (matchedTemplate == null) {
                                     color = currentColor
                                 }
                             },
 
-                        )
+                            )
                     }
                     item {
                         val isCustomColorSelected = !colors.contains(color)
@@ -359,8 +370,7 @@ class AddCard {
                     }
                 }
                 Row(
-                    modifier = Modifier.fillMaxWidth().
-                    padding(top = 16.dp)
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
                 ) {
                     Button(
                         onClick = {
@@ -446,8 +456,8 @@ class AddCard {
                 }
             }
             if (showColorPicker) {
-                val initialColor = remember{ color }
-                val pickerInitialColor = remember{
+                val initialColor = remember { color }
+                val pickerInitialColor = remember {
                     if (colors.contains(initialColor)) {
                         Color.White
                     } else {
@@ -460,8 +470,8 @@ class AddCard {
                         showColorPicker = false
                     }
                 ) {
-                    Card(
-                        shape = RoundedCornerShape(16.dp),
+                    androidx.compose.material3.Card(
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                     ) {
 
                         val controller = rememberColorPickerController()
@@ -564,14 +574,17 @@ class AddCard {
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(
-                    if (isCustomPicker && isSelected) SolidColor(color) else if(isCustomPicker) rainbowBrush else SolidColor(color)
+                    if (isCustomPicker && isSelected) SolidColor(color) else if (isCustomPicker) rainbowBrush else SolidColor(
+                        color
+                    )
                 ),
             contentAlignment = Alignment.Center
         ) {
             IconButton(
                 onClick = { onClick() }
             ) {
-                val iconColor = if (color.luminance() > 0.5) Color.Black else Color.White
+                val iconColor =
+                    if (color.luminance() > 0.5) Color.Black else Color.White
                 if (isSelected) {
                     Icon(
                         imageVector = Icons.Filled.Check,

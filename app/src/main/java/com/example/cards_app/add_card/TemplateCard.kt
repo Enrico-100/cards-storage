@@ -1,4 +1,6 @@
-package com.example.cards_app
+package com.example.cards_app.add_card
+
+import com.example.cards_app.R
 
 data class TemplateCard(
     val nameOfCard: String,

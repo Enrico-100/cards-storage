@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
+import com.example.cards_app.add_card.Templates
 
 class MyCards {
 
@@ -113,7 +114,7 @@ class MyCards {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .heightIn(max = 100.dp, min = 50.dp)
+                            .height(100.dp)
                     ) {
                         if (logoResId != null) {
 
@@ -151,13 +152,36 @@ class MyCards {
                         } else {
                             val color = Color(card.color.toColorInt())
                             val blackOrWhite = if (color.luminance() > 0.5) Color.Black else Color.White
-                            val initials = if (card.nameOfCard.split(" ").size >= 2) {
-                                card.nameOfCard.split(" ")
-                                    .mapNotNull { it.firstOrNull()?.uppercase() }
-                                    .take(2)
-                                    .joinToString("")
-                            } else {
-                                card.nameOfCard.take(2).uppercase()
+                            val initials = remember(card.nameOfCard) {
+                                val parts = card.nameOfCard.split(" ").filter { it.isNotBlank() }
+                                val lowerCaseParts = parts.map { it.lowercase() }
+
+                                val nIndex = lowerCaseParts.indexOfFirst { it == "n" || it == "and" }
+                                val ampersandIndex = lowerCaseParts.indexOfFirst { it == "&" }
+
+                                when {
+                                    nIndex != -1 -> {
+                                        val before = parts.subList(0,nIndex).mapNotNull{it.firstOrNull()?.uppercaseChar()}.joinToString("")
+                                        val after = parts.subList(nIndex+1,parts.size).mapNotNull{it.firstOrNull()?.uppercaseChar()}.joinToString("")
+                                        "${before}n${after}"
+                                    }
+
+                                    ampersandIndex != -1 -> {
+                                        val before = parts.subList(0,ampersandIndex).mapNotNull{it.firstOrNull()?.uppercaseChar()}.joinToString("")
+                                        val after = parts.subList(ampersandIndex+1, parts.size).mapNotNull{it.firstOrNull()?.uppercaseChar()}.joinToString("")
+                                        "${before}&${after}"
+                                    }
+
+                                    parts.size >= 2 -> {
+                                        parts.take(2).mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString("")
+                                    }
+
+                                    parts.isNotEmpty() -> {
+                                        parts.first().take(2).uppercase()
+                                    }
+
+                                    else -> "Card"
+                                }
                             }
                             Text(
                                 text = initials,

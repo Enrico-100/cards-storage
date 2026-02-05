@@ -1,8 +1,10 @@
-package com.example.cards_app
+package com.example.cards_app.add_card
 
 import android.util.Log
 import android.view.ViewGroup
+import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -12,19 +14,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import java.util.concurrent.Executors
 
-@androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
+@OptIn(ExperimentalGetImage::class)
 @Composable
 fun CameraView(
     modifier: Modifier = Modifier,
     onCodeScanned: (value: String, format: Int) -> Unit
 ){
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
 
     AndroidView(

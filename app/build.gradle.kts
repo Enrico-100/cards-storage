@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.androidx.camera.view)
 
     implementation(libs.colorpicker.compose)
+    implementation(libs.komposecountrycodepicker)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

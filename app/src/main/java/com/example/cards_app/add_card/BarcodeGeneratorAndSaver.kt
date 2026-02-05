@@ -1,4 +1,4 @@
-package com.example.cards_app
+package com.example.cards_app.add_card
 
 import android.content.Context
 import android.graphics.Bitmap

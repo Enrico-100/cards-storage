@@ -4,6 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cards_app.add_card.BarcodeGeneratorAndSaver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,7 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
     private val _editStack = MutableStateFlow(listOf(false))//edit stack
     val editStack = _editStack.asStateFlow()
 
-    //--loadnig state--//
+    //--loading state--//
     private val _isLoading = MutableStateFlow(true)//loading state
     val isLoading = _isLoading.asStateFlow()
 
@@ -77,8 +78,8 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
     fun deleteCardFromStack(cardToDeleted: Card?) {
         if (cardToDeleted == null) return
         deleteCardByID(cardToDeleted.id)
-        val zipedStacks = _screenStack.value.zip(_cardStack.value).zip(_editStack.value) { (screen, card), edit -> Triple(screen, card, edit) }
-        val newStacks = zipedStacks.filter { it.second?.id != cardToDeleted.id }
+        val zippedStacks = _screenStack.value.zip(_cardStack.value).zip(_editStack.value) { (screen, card), edit -> Triple(screen, card, edit) }
+        val newStacks = zippedStacks.filter { it.second?.id != cardToDeleted.id }
         if (newStacks.isEmpty()) {
             _screenStack.value = listOf(0)
             _cardStack.value = listOf(null)
@@ -108,10 +109,10 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
             initialValue = emptyList()
         )
     //--add card and save logic--//
-    fun addCardAndSave(newCard: Card, onSucess: () -> Unit) {//add card and save to disk
+    fun addCardAndSave(newCard: Card, onSuccess: () -> Unit) {//add card and save to disk
         viewModelScope.launch {
             localCardsRepo.saveCard(newCard)
-            onSucess()
+            onSuccess()
         }
     }
     fun deleteCardByID(id: String) {//delete card by id

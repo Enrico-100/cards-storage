@@ -1,5 +1,6 @@
-package com.example.cards_app
+package com.example.cards_app.account_management
 
+import android.util.Patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cards_app.Card
+import com.example.cards_app.MainViewModel
 import com.example.cards_app.communication.CommunicationViewModel
 import com.example.cards_app.communication.CommunicationViewModelFactory
 import com.example.cards_app.models.User
@@ -83,9 +86,12 @@ class AccountScreen {
                 )
             }
         }
-        
+
         if (user == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
                 CircularProgressIndicator()
             }
             return
@@ -108,7 +114,7 @@ class AccountScreen {
                     modifier = Modifier.weight(1f)
                 ) {
                     // --- Show the sync card ---
-                    item{
+                    item {
                         SyncCardsCard(
                             currentUser = user!!,
                             isLoading = uiState.isLoading,
@@ -217,7 +223,7 @@ class AccountScreen {
                     "A verification code was sent to $target. Please enter it below.",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                if (type == "Email"){
+                if (type == "Email") {
                     Text(
                         "Please check your spam folder.",
                         style = MaterialTheme.typography.bodyMedium
@@ -240,7 +246,7 @@ class AccountScreen {
                     Button(
                         onClick = { onResendClick() },
                         enabled = !isVerifying
-                    ){
+                    ) {
                         Text("Resend code")
                     }
                     Button(
@@ -302,9 +308,30 @@ class AccountScreen {
                 Text("Update Your Details", style = MaterialTheme.typography.titleLarge)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !isLoading)
-                OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !isLoading)
-                OutlinedTextField(value = phoneNumber, onValueChange = { phoneNumber = it }, label = { Text("Phone Number") }, modifier = Modifier.fillMaxWidth(), singleLine = true, enabled = !isLoading)
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    enabled = !isLoading
+                )
+                OutlinedTextField(
+                    value = phoneNumber,
+                    onValueChange = { phoneNumber = it },
+                    label = { Text("Phone Number") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    enabled = !isLoading
+                )
                 OutlinedTextField(
                     value = newPassword,
                     onValueChange = { newPassword = it },
@@ -324,17 +351,22 @@ class AccountScreen {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 @Suppress("assignedValueIsNeverRead")
-                Button(
+                (Button(
                     onClick = {
                         // --- Client-side validation ---
-                        val isPhoneValid = phoneNumber.isBlank() || android.util.Patterns.PHONE.matcher(phoneNumber).matches()
-                        val isEmailValid = email.isBlank() || android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                        val isPhoneValid =
+                            phoneNumber.isBlank() || Patterns.PHONE.matcher(phoneNumber).matches()
+                        val isEmailValid =
+                            email.isBlank() || Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
                         if (!isEmailValid) {
                             clientSideError = "Please enter a valid email address."
                         } else if (!isPhoneValid) {
                             clientSideError = "Please enter a valid phone number."
-                        } else if(newPassword.isBlank()|| communicationViewModel.validatePassword(newPassword)){
+                        } else if (newPassword.isBlank() || communicationViewModel.validatePassword(
+                                newPassword
+                            )
+                        ) {
                             // Validation passed, create the updated User object
                             val updatedUser = User(
                                 username = currentUser.username, // Username is immutable
@@ -350,7 +382,7 @@ class AccountScreen {
                     enabled = !isLoading
                 ) {
                     Text("Update")
-                }
+                })
             }
         }
     }
@@ -374,6 +406,50 @@ class AccountScreen {
         val serverOnlyCards = serverCards.filter { server -> localCards.none { it.id == server.id } }
         val isOutOfSync = localOnlyCards.isNotEmpty() || serverOnlyCards.isNotEmpty()
 
+        // --- force download/upload of cards
+        var forcedAction by remember { mutableStateOf(null as String?) }
+        @Suppress("assignedValueIsNeverRead")
+        forcedAction?.let {
+            AlertDialog(
+                onDismissRequest = { forcedAction = null },
+                title = { Text("Are you sure ?") },
+                text = {
+                    when (forcedAction) {
+                        "force_download" -> {
+                            Text("This will completely replace all cards on this device with the cards from the server. Any unsynced cards on this device will be deleted.")
+                        }
+
+                        "force_upload" -> {
+                            Text("This will completely replace all cards on the server with the cards from this device. Any cards on the server that are not on this device will be deleted.")
+                        }
+
+                        else -> {
+                            Text("This action is irreversible!")
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            when (forcedAction) {
+                                "force_upload" -> onSyncClick(localCards) // Send ONLY local cards
+                                "force_download" -> mainViewModel.overwriteLocalCards(serverCards) // Use ONLY server cards
+                            }
+                            forcedAction = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Confirm")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { forcedAction = null }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
         // Only show the card if there's a need to sync.
         if (isOutOfSync) {
             Card(
@@ -382,7 +458,7 @@ class AccountScreen {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Sync Your Cards", style = MaterialTheme.typography.titleLarge)
+                    Text("Sync your cards", style = MaterialTheme.typography.titleLarge)
                     Spacer(modifier = Modifier.height(8.dp))
 
                     if (localOnlyCards.isNotEmpty()) {
@@ -394,6 +470,7 @@ class AccountScreen {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    Text("Safe Sync (Recommended)", style = MaterialTheme.typography.titleMedium)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -414,11 +491,46 @@ class AccountScreen {
                         Button(
                             onClick = {
                                 // Call the MainViewModel function to overwrite local data
-                                mainViewModel.overwriteLocalCards(serverCards)
+                                val mergedList = (serverCards + localOnlyCards).distinctBy { it.id }
+                                mainViewModel.overwriteLocalCards(mergedList)
                             },
                             enabled = !isLoading
                         ) {
                             Text("Download from Server")
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Advanced (Overwrite)", style = MaterialTheme.typography.titleMedium)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // "Force Upload" button
+                        Button(
+                            onClick = {
+                                forcedAction = "force_upload"
+                            },
+                            enabled = !isLoading,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                        ) {
+                            Text(
+                                "Force upload",
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+
+                        // "Force Download" button
+                        Button(
+                            onClick = {
+                                forcedAction = "force_download"
+                            },
+                            enabled = !isLoading,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                        ) {
+                            Text(
+                                "Force download",
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
                         }
                     }
                 }

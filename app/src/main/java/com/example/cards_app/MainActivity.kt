@@ -32,6 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.example.cards_app.account_management.AccountScreen
+import com.example.cards_app.account_management.LogInScreen
+import com.example.cards_app.account_management.RecoveryScreen
+import com.example.cards_app.account_management.SignUpScreen
+import com.example.cards_app.add_card.AddCard
+import com.example.cards_app.add_card.DropdownAction
 import com.example.cards_app.ui.theme.Cards_appTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,9 +69,21 @@ class MainActivity : ComponentActivity() {
 
 
             val dropdownMenuItems: List<DropdownAction> = listOf(
-                DropdownAction("Your cards", onClick = { viewModel.navigateTo(0) }, icon = R.drawable.outline_account_balance_wallet_24),
-                DropdownAction("Add card", onClick = { viewModel.navigateTo(1) }, icon = R.drawable.outline_add_card_24),
-                DropdownAction("Account", onClick = { viewModel.navigateTo(2) }, icon = R.drawable.outline_account_circle_24)
+                DropdownAction(
+                    "Your cards",
+                    onClick = { viewModel.navigateTo(0) },
+                    icon = R.drawable.outline_account_balance_wallet_24
+                ),
+                DropdownAction(
+                    "Add card",
+                    onClick = { viewModel.navigateTo(1) },
+                    icon = R.drawable.outline_add_card_24
+                ),
+                DropdownAction(
+                    "Account",
+                    onClick = { viewModel.navigateTo(2) },
+                    icon = R.drawable.outline_account_circle_24
+                )
             )
 
             Cards_appTheme {

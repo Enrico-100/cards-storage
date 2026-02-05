@@ -1,4 +1,4 @@
-package com.example.cards_app
+package com.example.cards_app.account_management
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement

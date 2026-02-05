@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cards_app.Card
 import com.example.cards_app.LocalCardsRepository
-import com.example.cards_app.RecoveryStep
+import com.example.cards_app.account_management.RecoveryStep
 import com.example.cards_app.models.RecoveryInitiateRequest
 import com.example.cards_app.models.RecoveryOption
 import com.example.cards_app.models.RecoveryResetRequest

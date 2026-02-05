@@ -1,10 +1,8 @@
-package com.example.cards_app
+package com.example.cards_app.account_management
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import android.util.Patterns
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,65 +29,90 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cards_app.communication.CommunicationViewModel
 import com.example.cards_app.communication.CommunicationViewModelFactory
+import com.example.cards_app.models.User
 
-
-class LogInScreen {
+class SignUpScreen {
 
     @Composable
-    fun MyLogInScreen(
-        onSignUpClick: () -> Unit = {},
-        onLoginSuccess: () -> Unit = {},
-        onForgotPasswordClick: () -> Unit = {},
+    fun MySignUpScreen(
+        onSignUpSuccess: () -> Unit = {},
         communicationViewModel: CommunicationViewModel = viewModel(
             factory = CommunicationViewModelFactory(LocalContext.current.applicationContext)
         )
     ){
+        val uiState by communicationViewModel.uiState.collectAsState()
+
+
         var username by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var showPassword by remember { mutableStateOf(false) }
-        val loggedIn by communicationViewModel.loggedIn.collectAsState()
+        var email by remember { mutableStateOf("") }
+        var clientSideError by remember { mutableStateOf<String?>(null) }
 
-        val uiState by communicationViewModel.uiState.collectAsState()
-
-        // Use LaunchedEffect to ensure navigation happens only once
-        if (uiState.isSuccess || loggedIn) {
+        if (uiState.isSuccess) {
             LaunchedEffect(Unit) {
-                onLoginSuccess()
-                communicationViewModel.clearError() // Reset state after navigation
+                onSignUpSuccess()
+                communicationViewModel.clearState() // Reset state after navigation
+
             }
         }
 
+        // Handle errors from the ViewModel (API or network errors)
+        uiState.error?.let { serverError ->
+            if (uiState.isSuccess){
+                AlertDialog(
+                    onDismissRequest = { communicationViewModel.clearError() },
+                    title = { Text("Registration") },
+                    text = { Text(serverError) },
+                    confirmButton = {
+                        TextButton(onClick = { communicationViewModel.clearError() }) { Text("OK") }
+                    }
+                )
+            } else {
+                AlertDialog(
+                    onDismissRequest = { communicationViewModel.clearError() },
+                    title = { Text("Registration") },
+                    text = { Text(serverError) },
+                    confirmButton = {
+                        TextButton(onClick = { communicationViewModel.clearError() }) { Text("OK") }
+                    }
+                )
+            }
+        }
 
-        uiState.error?.let { errorMessage ->
+        // Handle client-side validation errors
+        @Suppress("assignedValueIsNeverRead")
+        clientSideError?.let { localError ->
             AlertDialog(
-                onDismissRequest = { communicationViewModel.clearError() },
-                title = { Text("Error") },
-                text = { Text(errorMessage) },
+                onDismissRequest = { clientSideError = null },
+                title = { Text("Invalid Input") },
+                text = { Text(localError) },
                 confirmButton = {
-                    TextButton(onClick = { communicationViewModel.clearError() }) {
+                    TextButton(onClick = { clientSideError = null }) {
                         Text("OK")
                     }
                 }
             )
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
                 Text(
-                    "Please log in or sign up",
+                    "Create your account",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.headlineMedium,
@@ -120,41 +143,47 @@ class LogInScreen {
                     },
                     enabled = !uiState.isLoading
                 )
-                Text(
-                    text = "Forgot password?",
-                    modifier = Modifier.align(Alignment.End)
-                        .clickable { onForgotPasswordClick() }
-                        .padding(top = 8.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                    textDecoration = TextDecoration.Underline
-                )
-                Row(
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    singleLine = true,
+                    enabled = !uiState.isLoading
+                )
+                Spacer(modifier = Modifier.padding(8.dp))
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Spacer(modifier = Modifier.weight(1f))
+                    @Suppress("assignedValueIsNeverRead")
                     Button(
                         onClick = {
-                            communicationViewModel.performLogIn(username, password)
+                            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                                clientSideError = "Please enter a valid email address"
+                            } else if (username.isBlank() || password.isBlank()) {
+                                clientSideError = "Username and password cannot be empty"
+                            } else if (communicationViewModel.validatePassword(password)) {
+                                val user = User(
+                                    username = username,
+                                    passwordHash = password,
+                                    email = email
+                                )
+                                communicationViewModel.performRegistration(user)
+                            }
                         },
-                        enabled = !uiState.isLoading
+                        enabled = !uiState.isLoading,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Log in")
+                        Text("Create account")
                     }
-                    Button(
-                        onClick = {
-                            onSignUpClick()
-                        },
-                        enabled = !uiState.isLoading
-                    ) {
-                        Text("Sign up")
-                    }
-                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
-            if (uiState.isLoading){
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            if (uiState.isLoading) {
+                // Loading indicator
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
     }
