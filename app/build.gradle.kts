@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
 }
@@ -70,7 +69,6 @@ dependencies {
     implementation(libs.androidx.camera.view)
 
     implementation(libs.colorpicker.compose)
-    implementation(libs.komposecountrycodepicker)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
