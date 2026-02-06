@@ -42,6 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cards_app.Card
 import com.example.cards_app.MainViewModel
+import com.example.cards_app.account_management.country_code_picker.Countries
+import com.example.cards_app.account_management.country_code_picker.Country
+import com.example.cards_app.account_management.country_code_picker.CountryCodePicker
 import com.example.cards_app.communication.CommunicationViewModel
 import com.example.cards_app.communication.CommunicationViewModelFactory
 import com.example.cards_app.models.User
@@ -272,11 +275,30 @@ class AccountScreen {
         // State for the text fields, pre-filled with current user data
         var name by remember { mutableStateOf(currentUser.name ?: "") }
         var email by remember { mutableStateOf(currentUser.email ?: "") }
-        var phoneNumber by remember { mutableStateOf(currentUser.phoneNumber ?: "") }
         var newPassword by remember { mutableStateOf("") }
         var showPassword by remember { mutableStateOf(false) }
         var clientSideError by remember { mutableStateOf<String?>(null) }
         val uiState by communicationViewModel.uiState.collectAsState()
+
+        var fullPhoneNumber by remember { mutableStateOf(currentUser.phoneNumber ?: "") }
+        var phoneNumber by remember { mutableStateOf("") }
+        var initialCountry: Country? by remember { mutableStateOf(null) }
+
+        LaunchedEffect(currentUser.phoneNumber) {
+            val fullNum = currentUser.phoneNumber
+            if (!fullNum.isNullOrBlank()) {
+                val country = Countries.countries
+                    .filter { fullNum.startsWith(it.code.toString()) }
+                    .maxByOrNull { it.code.toString().length }
+
+                if (country != null) {
+                    initialCountry = country
+                    phoneNumber = fullNum.removePrefix(country.code.toString())
+                } else {
+                    phoneNumber = ""
+                }
+            }
+        }
 
 
         LaunchedEffect(uiState.isSuccess) {
@@ -320,17 +342,26 @@ class AccountScreen {
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
+
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     enabled = !isLoading
                 )
-                OutlinedTextField(
-                    value = phoneNumber,
-                    onValueChange = { phoneNumber = it },
-                    label = { Text("Phone Number") },
+                CountryCodePicker(
                     modifier = Modifier.fillMaxWidth(),
+                    number = phoneNumber,
+                    onNumberChange = {
+                        phoneNumber = it.first
+                        fullPhoneNumber = it.second
+                    },
+                    label = "Phone Number",
                     singleLine = true,
-                    enabled = !isLoading
+                    enabled = !isLoading,
+                    initialCountry = initialCountry?.initials ?: "SI",
+                    onCountryChange = {
+                        phoneNumber = ""
+                        fullPhoneNumber = it.code.toString()
+                    }
                 )
                 OutlinedTextField(
                     value = newPassword,
@@ -355,7 +386,7 @@ class AccountScreen {
                     onClick = {
                         // --- Client-side validation ---
                         val isPhoneValid =
-                            phoneNumber.isBlank() || Patterns.PHONE.matcher(phoneNumber).matches()
+                            fullPhoneNumber.isBlank() || Patterns.PHONE.matcher(fullPhoneNumber).matches()
                         val isEmailValid =
                             email.isBlank() || Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
@@ -372,7 +403,7 @@ class AccountScreen {
                                 username = currentUser.username, // Username is immutable
                                 name = name.takeIf { it.isNotBlank() },
                                 email = email.takeIf { it.isNotBlank() },
-                                phoneNumber = phoneNumber.takeIf { it.isNotBlank() },
+                                phoneNumber = fullPhoneNumber.takeIf { it.isNotBlank() },
                                 passwordHash = newPassword.takeIf { it.isNotBlank() }, // Send new password only if it's not blank
                                 cards = currentUser.cards
                             )
