@@ -1,6 +1,7 @@
 package com.example.cards_app
 
 import android.util.Log
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,9 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
@@ -29,8 +31,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -43,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
 import com.example.cards_app.add_card.Templates
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyGridState
 
 class MyCards {
 
@@ -53,18 +59,29 @@ class MyCards {
         onEditClick: (Card) -> Unit = {},
         onDeleteClick: (Card) -> Unit = {},
         onRegenerate: (Card) -> Unit = {},
-        noCardsYetClick: () -> Unit = {}
+        noCardsYetClick: () -> Unit = {},
+        onReorder: (List<Card>) -> Unit = {}
     ){
         val showCard = remember { mutableStateOf(false) }
         val showEditDialog = remember { mutableStateOf(false) }
         val showDeleteDialog = remember { mutableStateOf(false) }
         val currentCardIndex = remember { mutableStateOf<Int?>(null) }
-        // This will allow the sheet to expand to full height
+        var reorderedCards by remember(cards){ mutableStateOf(cards) }
+        val lazyGridState = rememberLazyGridState()
+        val reorderableLazyGridState = rememberReorderableLazyGridState(
+            lazyGridState = lazyGridState,
+            onMove = { from, to ->
+                reorderedCards = reorderedCards.toMutableList().apply {
+                    add(to.index, removeAt(from.index))
+                }
+                onReorder(reorderedCards)
+            }
+        )
         val sheetState = rememberModalBottomSheetState(
             skipPartiallyExpanded = true
         )
         if (showEditDialog.value && currentCardIndex.value != null) {
-            onEditClick(cards[currentCardIndex.value!!])
+            onEditClick(reorderedCards[currentCardIndex.value!!])
         }
         if (showDeleteDialog.value && currentCardIndex.value != null) {
             AlertDialog(
@@ -76,7 +93,7 @@ class MyCards {
                         onClick = {
                             showCard.value = false
                             showDeleteDialog.value = false
-                            onDeleteClick(cards[currentCardIndex.value!!])
+                            onDeleteClick(reorderedCards[currentCardIndex.value!!])
                         }
                     ) {
                         Text("Delete")
@@ -91,119 +108,140 @@ class MyCards {
                 }
             )
         }
-        LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Fixed(2),
-            modifier = Modifier.padding(7.dp)
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.padding(7.dp),
+            state = lazyGridState
         ){
-            items(count = cards.size) { cardIndex ->
-                val card = cards[cardIndex]
-                val template = Templates.list.find { it.nameOfCard.equals(card.nameOfCard, ignoreCase = true) }
-                val logoResId = template?.logoResId
-                Card(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(7.dp)
-                        .clickable(onClick = {
-                            showCard.value = true
-                            currentCardIndex.value = cardIndex
-                        }),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(template?.color?.toColorInt() ?: card.color.toColorInt())
-                    )
-                ) {
-                    Box(
+            items(count = reorderedCards.size, key = { reorderedCards[it].id }) { cardIndex ->
+                ReorderableItem(reorderableLazyGridState, key = reorderedCards[cardIndex].id) { isDragging ->
+                    val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
+                    val card = reorderedCards[cardIndex]
+                    val template =
+                        Templates.list.find { it.nameOfCard.equals(card.nameOfCard, ignoreCase = true) }
+                    val logoResId = template?.logoResId
+                    Card(
                         modifier = Modifier
                             .fillMaxSize()
-                            .height(100.dp)
-                    ) {
-                        if (logoResId != null) {
-
-                            Image(
-                                painter = painterResource(id = logoResId),
-                                contentDescription = "Logo",
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .fillMaxSize(),
-                                contentScale = ContentScale.Fit
+                            .padding(7.dp)
+                            .clickable(onClick = {
+                                showCard.value = true
+                                currentCardIndex.value = cardIndex
+                            })
+                            .draggableHandle(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(
+                                template?.color?.toColorInt() ?: card.color.toColorInt()
                             )
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        brush = Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Black.copy(alpha = 0.1f),
-                                                Color.Black.copy(alpha = 0.5f)
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .height(100.dp)
+                        ) {
+                            if (logoResId != null) {
+
+                                Image(
+                                    painter = painterResource(id = logoResId),
+                                    contentDescription = "Logo",
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .fillMaxSize(),
+                                    contentScale = ContentScale.Fit
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Black.copy(alpha = 0.1f),
+                                                    Color.Black.copy(alpha = 0.5f)
+                                                )
                                             )
                                         )
+                                        .matchParentSize()
+                                ) {
+                                    Text(
+                                        text = card.name,
+                                        modifier = Modifier
+                                            .padding(12.dp)
+                                            .align(Alignment.BottomStart),
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.titleMedium
                                     )
-                                    .matchParentSize()
-                            ){
+                                }
+
+                            } else {
+                                val color = Color(card.color.toColorInt())
+                                val blackOrWhite =
+                                    if (color.luminance() > 0.5) Color.Black else Color.White
+                                val initials = remember(card.nameOfCard) {
+                                    val parts = card.nameOfCard.split(" ").filter { it.isNotBlank() }
+                                    val lowerCaseParts = parts.map { it.lowercase() }
+
+                                    val nIndex =
+                                        lowerCaseParts.indexOfFirst { it == "n" || it == "and" }
+                                    val ampersandIndex = lowerCaseParts.indexOfFirst { it == "&" }
+
+                                    when {
+                                        nIndex != -1 -> {
+                                            val before = parts.subList(0, nIndex)
+                                                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                                .joinToString("")
+                                            val after = parts.subList(nIndex + 1, parts.size)
+                                                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                                .joinToString("")
+                                            "${before}n${after}"
+                                        }
+
+                                        ampersandIndex != -1 -> {
+                                            val before = parts.subList(0, ampersandIndex)
+                                                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                                .joinToString("")
+                                            val after = parts.subList(ampersandIndex + 1, parts.size)
+                                                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                                .joinToString("")
+                                            "${before}&${after}"
+                                        }
+
+                                        parts.size >= 2 -> {
+                                            parts.take(2)
+                                                .mapNotNull { it.firstOrNull()?.uppercaseChar() }
+                                                .joinToString("")
+                                        }
+
+                                        parts.isNotEmpty() -> {
+                                            parts.first().take(2).uppercase()
+                                        }
+
+                                        else -> "Card"
+                                    }
+                                }
+                                Text(
+                                    text = initials,
+                                    modifier = Modifier.align(Alignment.Center),
+                                    color = blackOrWhite,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
                                 Text(
                                     text = card.name,
                                     modifier = Modifier
                                         .padding(12.dp)
                                         .align(Alignment.BottomStart),
-                                    color = Color.White,
+                                    color = blackOrWhite,
                                     style = MaterialTheme.typography.titleMedium
                                 )
                             }
-
-                        } else {
-                            val color = Color(card.color.toColorInt())
-                            val blackOrWhite = if (color.luminance() > 0.5) Color.Black else Color.White
-                            val initials = remember(card.nameOfCard) {
-                                val parts = card.nameOfCard.split(" ").filter { it.isNotBlank() }
-                                val lowerCaseParts = parts.map { it.lowercase() }
-
-                                val nIndex = lowerCaseParts.indexOfFirst { it == "n" || it == "and" }
-                                val ampersandIndex = lowerCaseParts.indexOfFirst { it == "&" }
-
-                                when {
-                                    nIndex != -1 -> {
-                                        val before = parts.subList(0,nIndex).mapNotNull{it.firstOrNull()?.uppercaseChar()}.joinToString("")
-                                        val after = parts.subList(nIndex+1,parts.size).mapNotNull{it.firstOrNull()?.uppercaseChar()}.joinToString("")
-                                        "${before}n${after}"
-                                    }
-
-                                    ampersandIndex != -1 -> {
-                                        val before = parts.subList(0,ampersandIndex).mapNotNull{it.firstOrNull()?.uppercaseChar()}.joinToString("")
-                                        val after = parts.subList(ampersandIndex+1, parts.size).mapNotNull{it.firstOrNull()?.uppercaseChar()}.joinToString("")
-                                        "${before}&${after}"
-                                    }
-
-                                    parts.size >= 2 -> {
-                                        parts.take(2).mapNotNull { it.firstOrNull()?.uppercaseChar() }.joinToString("")
-                                    }
-
-                                    parts.isNotEmpty() -> {
-                                        parts.first().take(2).uppercase()
-                                    }
-
-                                    else -> "Card"
-                                }
-                            }
-                            Text(
-                                text = initials,
-                                modifier = Modifier.align(Alignment.Center),
-                                color = blackOrWhite,
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = card.name,
-                                modifier = Modifier
-                                    .padding(12.dp)
-                                    .align(Alignment.BottomStart),
-                                color = blackOrWhite,
-                                style = MaterialTheme.typography.titleMedium
-                            )
                         }
                     }
                 }
             }
             item(
-                span = StaggeredGridItemSpan.FullLine
+                span = {GridItemSpan(maxLineSpan)}
             ) {
                 Card(
                     modifier = Modifier
@@ -233,7 +271,7 @@ class MyCards {
             }
         }
         if (showCard.value) {
-            val card = cards[currentCardIndex.value ?: return]
+            val card = reorderedCards[currentCardIndex.value ?: return]
             val template = Templates.list.find { it.nameOfCard.equals(card.nameOfCard, ignoreCase = true) }
             ModalBottomSheet(
                 onDismissRequest = { showCard.value = false },

@@ -1,5 +1,6 @@
 package com.example.cards_app.account_management
 
+import android.util.Log
 import android.util.Patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -405,7 +406,6 @@ class AccountScreen {
                                 email = email.takeIf { it.isNotBlank() },
                                 phoneNumber = fullPhoneNumber.takeIf { it.isNotBlank() },
                                 passwordHash = newPassword.takeIf { it.isNotBlank() }, // Send new password only if it's not blank
-                                cards = currentUser.cards
                             )
                             onUpdateClick(updatedUser)
                         }
@@ -438,7 +438,7 @@ class AccountScreen {
         val isOutOfSync = localOnlyCards.isNotEmpty() || serverOnlyCards.isNotEmpty()
 
         // --- force download/upload of cards
-        var forcedAction by remember { mutableStateOf(null as String?) }
+        var forcedAction by remember { mutableStateOf<String?>(null) }
         @Suppress("assignedValueIsNeverRead")
         forcedAction?.let {
             AlertDialog(
@@ -522,7 +522,7 @@ class AccountScreen {
                         Button(
                             onClick = {
                                 // Call the MainViewModel function to overwrite local data
-                                val mergedList = (serverCards + localOnlyCards).distinctBy { it.id }
+                                val mergedList = (localOnlyCards + serverCards).distinctBy { it.id }
                                 mainViewModel.overwriteLocalCards(mergedList)
                             },
                             enabled = !isLoading
@@ -564,6 +564,25 @@ class AccountScreen {
                             )
                         }
                     }
+                }
+            }
+        } else {
+            val isOrderOutOfSync = remember(localCards, serverCards) {
+                // Only check the order if the content is identical
+                if (localCards.isNotEmpty()) {
+                    // Compare the sequence of IDs directly.
+                    val localOrderIds = localCards.map { it.id }
+                    val serverOrderIds = serverCards.map { it.id }
+                    localOrderIds != serverOrderIds
+                } else {
+                    false
+                }
+            }
+            LaunchedEffect(isOrderOutOfSync, localCards) {
+                if (isOrderOutOfSync) {
+                    // The order is different, automatically push the local order to the server.
+                    Log.d("AccountScreen", "Order is out of sync, automatically pushing local order.")
+                    onSyncClick(localCards)
                 }
             }
         }

@@ -119,6 +119,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onRegenerate = {
                                         viewModel.regenerateCardImage(it, this@MainActivity)
+                                    },
+                                    onReorder = {
+                                        viewModel.overwriteLocalCards(it)
                                     }
                                 )
                             }

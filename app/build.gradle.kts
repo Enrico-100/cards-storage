@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.androidx.camera.view)
 
     implementation(libs.colorpicker.compose)
+    implementation(libs.reorderable)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
