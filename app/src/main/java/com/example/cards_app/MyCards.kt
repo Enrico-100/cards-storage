@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
 import com.example.cards_app.add_card.Templates
+import sh.calvin.reorderable.DragGestureDetector
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 
@@ -128,7 +129,9 @@ class MyCards {
                                 showCard.value = true
                                 currentCardIndex.value = cardIndex
                             })
-                            .draggableHandle(),
+                            .draggableHandle(
+                                dragGestureDetector = DragGestureDetector.LongPress
+                            ),
                         colors = CardDefaults.cardColors(
                             containerColor = Color(
                                 template?.color?.toColorInt() ?: card.color.toColorInt()
