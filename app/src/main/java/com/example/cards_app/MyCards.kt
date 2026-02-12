@@ -2,6 +2,7 @@ package com.example.cards_app
 
 import android.util.Log
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,8 +38,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -116,7 +119,9 @@ class MyCards {
         ){
             items(count = reorderedCards.size, key = { reorderedCards[it].id }) { cardIndex ->
                 ReorderableItem(reorderableLazyGridState, key = reorderedCards[cardIndex].id) { isDragging ->
-                    val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
+                    val elevation by animateDpAsState(if (isDragging) 10.dp else 0.dp)
+                    val scale by animateFloatAsState(if (isDragging) 0.95f else 1f, label = "scale")
+                    val alpha by animateFloatAsState(if (isDragging) 0.8f else 1f, label = "alpha")
                     val card = reorderedCards[cardIndex]
                     val template =
                         Templates.list.find { it.nameOfCard.equals(card.nameOfCard, ignoreCase = true) }
@@ -131,6 +136,12 @@ class MyCards {
                             })
                             .draggableHandle(
                                 dragGestureDetector = DragGestureDetector.LongPress
+                            )
+                            .shadow(elevation)
+                            .graphicsLayer(
+                                scaleX = scale,
+                                scaleY = scale,
+                                alpha = alpha
                             ),
                         colors = CardDefaults.cardColors(
                             containerColor = Color(

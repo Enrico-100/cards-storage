@@ -163,4 +163,19 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // settings logic //
+    private val _settings = AppDataStore(application.applicationContext)
+    val settingsFlow: StateFlow<String?> = _settings.settingsFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ""
+        )
+
+    fun saveSettings(newSettings: String) {
+        viewModelScope.launch {
+            _settings.saveSettings(newSettings)
+        }
+    }
+
 }

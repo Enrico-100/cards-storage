@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -66,6 +67,7 @@ class MainActivity : ComponentActivity() {
                     null
                 }
             }
+            val settings by viewModel.settingsFlow.collectAsState()
 
 
             val dropdownMenuItems: List<DropdownAction> = listOf(
@@ -83,10 +85,23 @@ class MainActivity : ComponentActivity() {
                     "Account",
                     onClick = { viewModel.navigateTo(2) },
                     icon = R.drawable.outline_account_circle_24
+                ),
+                DropdownAction(
+                    "Settings",
+                    onClick = { viewModel.navigateTo(7) },
+                    icon = R.drawable.outline_build_24
                 )
             )
+            val darkTheme = when (settings!!.split(" ")[0]){
+                "Light" -> false
+                "Dark" -> true
+                else -> isSystemInDarkTheme()
+            }
 
-            Cards_appTheme {
+            Cards_appTheme(
+                dynamicColor = true,
+                darkTheme = darkTheme
+            ) {
 
                 val myCards = MyCards()
 
@@ -199,6 +214,23 @@ class MainActivity : ComponentActivity() {
                                 RecoveryScreen(
                                     onRecoverySuccess = {
                                         viewModel.replaceScreenOnStack(2)
+                                    }
+                                )
+                            }
+                        }
+                        7 -> {//settings screen
+                            Column(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize()
+                            ) {
+                                SettingsScreen().MySettingsScreen(
+                                    settings = settings ?: "",
+                                    onSettingsChange = {
+                                        viewModel.saveSettings(it)
+                                    },
+                                    deleteAllCards = {
+                                        viewModel.overwriteLocalCards(emptyList())
                                     }
                                 )
                             }

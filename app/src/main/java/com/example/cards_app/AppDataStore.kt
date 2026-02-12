@@ -18,11 +18,44 @@ class AppDataStore(private val context: Context) {
 
     companion object {
         val CARDS_KEY = stringPreferencesKey("cards_list_json")
+        val SETTINGS_KEY = stringPreferencesKey("settings_json")
     }
+
+    val settingsFlow: Flow<String?> = context.cardsDataStore.data
+        .map { preferences ->
+            val settingsJson = preferences[SETTINGS_KEY]
+            if (!settingsJson.isNullOrEmpty()) {
+                try {
+                    Json.decodeFromString<String>(settingsJson)
+                } catch (e: Exception) {
+                    Log.e("AppDataStore", "Error decoding settings from JSON: ${e.message}")
+                    ""
+                }
+            }else{
+                ""
+            }
+        }
+        .catch { exception ->
+            Log.e("AppDataStore", "Error reading settings from DataStore: ${exception.message}")
+            emit("")
+        }
+
+    suspend fun saveSettings(newSettings: String) {
+        try {
+            context.cardsDataStore.edit { preferences ->
+                val jsonString = Json.encodeToString(newSettings)
+                preferences[SETTINGS_KEY] = jsonString
+                Log.d("AppDataStore", "Settings saved successfully. JSON: $jsonString")
+            }
+        } catch (e: Exception) {
+            Log.e("AppDataStore", "Error encoding or saving settings to DataStore: ${e.message}")
+        }
+    }
+
     val cardsFlow: Flow<List<Card>> = context.cardsDataStore.data
         .map { preferences ->
             val jsonString = preferences[CARDS_KEY]
-            if (jsonString != null && jsonString.isNotEmpty()) {
+            if (!jsonString.isNullOrEmpty()) {
                 try {
                     Json.decodeFromString<List<Card>>(jsonString)
                 }catch (e: Exception){
@@ -41,7 +74,7 @@ class AppDataStore(private val context: Context) {
         try {
             context.cardsDataStore.edit { preferences ->
                 val currentJson = preferences[CARDS_KEY]
-                val currentCards = if (currentJson != null && currentJson.isNotEmpty()) {
+                val currentCards = if (!currentJson.isNullOrEmpty()) {
                     try {
                         Json.decodeFromString<MutableList<Card>>(currentJson)
                     } catch (e: Exception) {
@@ -71,7 +104,7 @@ class AppDataStore(private val context: Context) {
             context.cardsDataStore.edit { preferences ->
                 // 1. Read current list safely
                 val currentJson = preferences[CARDS_KEY]
-                val currentCards = if (currentJson != null && currentJson.isNotEmpty()) {
+                val currentCards = if (!currentJson.isNullOrEmpty()) {
                     try {
                         Json.decodeFromString<MutableList<Card>>(currentJson)
                     } catch (e: Exception) {
