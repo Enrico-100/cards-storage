@@ -34,6 +34,9 @@ enum com.example.cards_app.models.VerificationType {
 
 class com.example.cards_app.MainActivity {
 - MainViewModel viewModel
+-  exportCardsLauncher
+-  importCardsLauncherForMerge
+-  importCardsLauncherForOverwrite
 + void onCreate(Bundle?)
 }
 
@@ -170,10 +173,13 @@ class com.example.cards_app.MainViewModel {
 +  editStack
 -  _isLoading
 +  isLoading
+-  _eventChannel
++  eventChannel
 + StateFlow<List<Card>> cards
 -  _settings
 + StateFlow<String?> settingsFlow
 + <<Create>> MainViewModel(Application)
+- void sendEvent(String)
 + void navigateTo(Int,Boolean,Card?)
 + void navigateBack()
 + void deleteCardFromStack(Card?)
@@ -181,6 +187,10 @@ class com.example.cards_app.MainViewModel {
 + void addCardAndSave(Card,() -> Unit)
 + void deleteCardByID(String)
 + void overwriteLocalCards(List<Card>)
++ void exportCardsToFile(Uri,ContentResolver)
++ void mergeCardsFromFile(Uri,ContentResolver)
++ void overwriteCardsFromFile(Uri,ContentResolver)
++ String readJsonFromFile(Uri,ContentResolver)
 + void regenerateCardImage(Card,android.content.Context)
 + void saveSettings(String)
 }
@@ -205,7 +215,7 @@ enum com.example.cards_app.account_management.RecoveryStep {
 }
 
 class com.example.cards_app.SettingsScreen {
-+ void MySettingsScreen(String,(String) -> Unit,() -> Unit)
++ void MySettingsScreen(String,(String) -> Unit,() -> Unit,() -> Unit,() -> Unit,() -> Unit)
 + void SettingsHeader(String)
 - void SettingsItem(String,String?,ImageVector,() -> Unit)
 + void CreditsDialog(() -> Unit)

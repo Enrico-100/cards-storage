@@ -44,7 +44,10 @@ class SettingsScreen {
     fun MySettingsScreen(
         settings: String,
         onSettingsChange: (String) -> Unit,
-        deleteAllCards: () -> Unit
+        deleteAllCards: () -> Unit,
+        onExportCards: () -> Unit,
+        onMergeCards: () -> Unit,
+        onOverwriteCards: () -> Unit
     ) {
         var themeSelector by remember { mutableStateOf(false) }
         val settingsList = remember(settings) { settings.split(" ") }
@@ -57,6 +60,7 @@ class SettingsScreen {
         }
         var deleteAllCardsDialog by remember { mutableStateOf(false) }
         var showCreditsDialog by remember { mutableStateOf(false) }
+        var showImportCardsDialog by remember { mutableStateOf(false) }
 
         if (themeSelector) {
             AlertDialog(
@@ -210,6 +214,60 @@ class SettingsScreen {
         if (showCreditsDialog) {
             CreditsDialog(onDismiss = { showCreditsDialog = false })
         }
+        if (showImportCardsDialog) {
+            AlertDialog(
+                onDismissRequest = { showImportCardsDialog = false },
+                title = { Text("Import cards") },
+                text = {
+                    Column {
+                        Text(
+                            "How would you like to import the cards from the backup file?",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = "This action cannot be undone!",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Button(
+                                onClick = {
+                                    showImportCardsDialog = false
+                                    onMergeCards()
+                                }
+                            ) {
+                                Text("Merge")
+                            }
+                            Button(
+                                onClick = {
+                                    showImportCardsDialog = false
+                                    onOverwriteCards()
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error
+                                ),
+                                modifier = Modifier.padding(start = 8.dp)
+                            ) {
+                                Text("Overwrite")
+                            }
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    Button(
+                        onClick = { showImportCardsDialog = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
 
         LazyColumn(
             modifier = Modifier.fillMaxSize()
@@ -227,6 +285,33 @@ class SettingsScreen {
                         .padding(horizontal = 24.dp)
                 ) {
                     Text("Change theme")
+                }
+            }
+            item {
+                SettingsHeader("Data Management")
+            }
+            item {
+                Button(
+                    onClick = {
+                        onExportCards()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    Text("Export cards")
+                }
+            }
+            item {
+                Button(
+                    onClick = {
+                        showImportCardsDialog = true
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    Text("Import cards")
                 }
             }
             item {
