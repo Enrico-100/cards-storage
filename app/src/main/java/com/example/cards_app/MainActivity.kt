@@ -40,10 +40,36 @@ import com.example.cards_app.account_management.SignUpScreen
 import com.example.cards_app.add_card.AddCard
 import com.example.cards_app.add_card.DropdownAction
 import com.example.cards_app.ui.theme.Cards_appTheme
+import android.net.Uri
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
+    private val exportCardsLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ){ uri: Uri? ->
+        uri?.let {
+            viewModel.exportCardsToFile(it, contentResolver)
+        }
+    }
+    private val importCardsLauncherForMerge = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.mergeCardsFromFile(it, contentResolver)
+        }
+    }
+    private val importCardsLauncherForOverwrite = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.overwriteCardsFromFile(it, contentResolver)
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -69,6 +95,12 @@ class MainActivity : ComponentActivity() {
             }
             val settings by viewModel.settingsFlow.collectAsState()
 
+            val context = LocalContext.current
+            LaunchedEffect(viewModel.eventChannel) {
+                viewModel.eventChannel.collect { event ->
+                    Toast.makeText(context, event, Toast.LENGTH_SHORT).show()
+                }
+            }
 
             val dropdownMenuItems: List<DropdownAction> = listOf(
                 DropdownAction(
@@ -231,6 +263,15 @@ class MainActivity : ComponentActivity() {
                                     },
                                     deleteAllCards = {
                                         viewModel.overwriteLocalCards(emptyList())
+                                    },
+                                    onExportCards = {
+                                        exportCardsLauncher.launch("cards_backup.json")
+                                    },
+                                    onMergeCards = {
+                                        importCardsLauncherForMerge.launch(arrayOf("application/json"))
+                                    },
+                                    onOverwriteCards = {
+                                        importCardsLauncherForOverwrite.launch(arrayOf("application/json"))
                                     }
                                 )
                             }

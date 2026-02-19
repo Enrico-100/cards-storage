@@ -1,20 +1,28 @@
 package com.example.cards_app
 
 import android.app.Application
+import android.content.ContentResolver
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cards_app.add_card.BarcodeGeneratorAndSaver
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 class MainViewModel (application: Application) : AndroidViewModel(application) {
     private val localCardsRepo = LocalCardsRepository(application)//a way to communicate with datastore
@@ -33,6 +41,16 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
     //--loading state--//
     private val _isLoading = MutableStateFlow(true)//loading state
     val isLoading = _isLoading.asStateFlow()
+
+    //--event channel--//
+    private val _eventChannel = Channel<String>()
+    val eventChannel = _eventChannel.receiveAsFlow()
+
+    private fun sendEvent(event: String) {
+        viewModelScope.launch {
+            _eventChannel.send(event)
+        }
+    }
 
     //--navigation logic--//
     fun navigateTo(screen: Int, edit: Boolean = false, cardToEdit: Card? = null) { //function that navigates to any screen and sets the current card and edit state
@@ -98,6 +116,8 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
         val newStack = _screenStack.value.map { if (it == currentScreen) screen else it }
         _screenStack.value = newStack
     }
+
+    // -- CARDS LOGIC -- //
     val cards: StateFlow<List<Card>> = localCardsRepo.cardsFlow//cards read from disk
         .onEach {
             delay(20)
@@ -127,6 +147,70 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
             Log.d("MainViewModel", "Local cards overwritten")
         }
     }
+
+    fun exportCardsToFile(uri: Uri, contentResolver: ContentResolver){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val cardsToExport = cards.first()
+                val jsonString = Json.encodeToString(cardsToExport)
+                contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(jsonString.toByteArray())
+                }
+                Log.d("MainViewModel", "Cards exported to $uri")
+                sendEvent("Cards successfully exported.")
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error exporting cards: ${e.message}")
+                sendEvent("Error exporting cards: ${e.message}")
+            }
+        }
+    }
+
+    fun mergeCardsFromFile(uri: Uri, contentResolver: ContentResolver) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val jsonString = readJsonFromFile(uri, contentResolver)
+                val newCards = Json.decodeFromString<List<Card>>(jsonString)
+                newCards.forEach { newCard ->
+                    localCardsRepo.saveCard(newCard)
+                }
+                Log.d("MainViewModel", "Cards merged ${newCards.size} cards from $uri")
+                sendEvent("Cards successfully merged.")
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error merging cards: ${e.message}")
+                sendEvent("Error merging cards: ${e.message}")
+            }
+        }
+    }
+
+    fun overwriteCardsFromFile(uri: Uri, contentResolver: ContentResolver) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val jsonString = readJsonFromFile(uri, contentResolver)
+                val newCards = Json.decodeFromString<List<Card>>(jsonString)
+                localCardsRepo.overwriteAll(newCards)
+                Log.d("MainViewModel", "Cards overwritten ${newCards.size} cards from $uri")
+                sendEvent("Cards successfully overwritten.")
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error overwriting cards: ${e.message}")
+                sendEvent("Error overwriting cards: ${e.message}")
+            }
+        }
+    }
+
+    fun readJsonFromFile(uri: Uri, contentResolver: ContentResolver): String {
+        val stringBuilder = StringBuilder()
+        contentResolver.openInputStream(uri)?.use { inputStream ->
+            BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                var line: String? = reader.readLine()
+                while (line != null) {
+                    stringBuilder.append(line)
+                    line = reader.readLine()
+                }
+            }
+        }
+        return stringBuilder.toString()
+    }
+
 
     //--card regeneration logic--//
     fun regenerateCardImage(card: Card, context: android.content.Context) {
