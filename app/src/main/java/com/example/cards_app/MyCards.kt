@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
@@ -179,12 +180,14 @@ class MyCards {
                                         .matchParentSize()
                                 ) {
                                     Text(
-                                        text = card.name,
+                                        text = "Name: ${card.name}",
                                         modifier = Modifier
                                             .padding(12.dp)
                                             .align(Alignment.BottomStart),
                                         color = Color.White,
-                                        style = MaterialTheme.typography.titleMedium
+                                        style = MaterialTheme.typography.titleMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
 
@@ -242,12 +245,14 @@ class MyCards {
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = card.name,
+                                    text = "Name: ${card.name}",
                                     modifier = Modifier
                                         .padding(12.dp)
                                         .align(Alignment.BottomStart),
                                     color = blackOrWhite,
-                                    style = MaterialTheme.typography.titleMedium
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -305,18 +310,18 @@ class MyCards {
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = card.name,
+                                text = "Name: ${card.name}",
                                 modifier = Modifier.padding(top = 8.dp),
                                 fontSize = MaterialTheme.typography.bodyLarge.fontSize,
                                 color = blackOrWhite
                             )
                             Text(
-                                text = card.nameOfCard,
+                                text = "Card name: ${card.nameOfCard}",
                                 fontSize = MaterialTheme.typography.bodyLarge.fontSize,
                                 color = blackOrWhite
                             )
                             Text(
-                                text = card.number,
+                                text = "Number: ${card.number}",
                                 fontSize = MaterialTheme.typography.bodyLarge.fontSize,
                                 color = blackOrWhite
                             )

@@ -1,0 +1,259 @@
+@startuml
+class com.example.cards_app.models.SendRecoveryCodeRequest {
++ <<Create>> SendRecoveryCodeRequest(String,VerificationType)
+}
+
+class com.example.cards_app.models.User {
++ <<Create>> User(String,String?,String?,String?,String?,List<Card>?,Boolean?,Boolean?)
+}
+
+class com.example.cards_app.models.RecoveryOption {
++ <<Create>> RecoveryOption(VerificationType,String)
+}
+
+class com.example.cards_app.communication.RetrofitClient {
+-  BASE_URL
+- OkHttpClient okHttpClient
++ ApiService instance
+}
+
+class com.example.cards_app.add_card.BarcodeGeneratorAndSaver {
++ Bitmap generateBarCode(String,Int)
++ String? saveBitmapToFile(Context,Bitmap,String)
++ BarcodeFormat getZxingFormat(Int)
+}
+
+class com.example.cards_app.MyCards {
++ void Cards2(List<Card>,(Card) -> Unit,(Card) -> Unit,(Card) -> Unit,() -> Unit,(List<Card>) -> Unit)
+}
+
+enum com.example.cards_app.models.VerificationType {
++  EMAIL
++  PHONE
+}
+
+class com.example.cards_app.MainActivity {
+- MainViewModel viewModel
++ void onCreate(Bundle?)
+}
+
+
+class com.example.cards_app.add_card.DropdownAction {
++ <<Create>> DropdownAction(String,() -> Unit,Int)
+}
+
+class com.example.cards_app.AppDataStore$Companion {
++  CARDS_KEY
++  SETTINGS_KEY
+}
+
+class com.example.cards_app.AppDataStore {
++ Flow<String?> settingsFlow
++ Flow<List<Card>> cardsFlow
++ <<Create>> AppDataStore(Context)
++ void saveSettings(String)
++ void saveCard(Card)
++ void deleteCardByID(String)
++ void overwriteAll(List<Card>)
+}
+
+
+class com.example.cards_app.account_management.country_code_picker.Country {
++ <<Create>> Country(String,String,Int,String,String,VisualTransformation)
+}
+
+class com.example.cards_app.account_management.country_code_picker.Countries {
++  countries
+}
+
+class com.example.cards_app.models.RecoveryResetRequest {
++ <<Create>> RecoveryResetRequest(String,String,String)
+}
+
+class com.example.cards_app.communication.RegisterUiState {
++ <<Create>> RegisterUiState(Boolean,Boolean,String?,List<RecoveryOption>?)
+}
+
+class com.example.cards_app.communication.CommunicationViewModel {
+-  userRepository
+-  _uiState
++  uiState
+-  _user
++  user
+- String? sessionUsername
+- String? sessionPassword
+- MutableStateFlow<Boolean> _loggedIn
++  loggedIn
+- MutableStateFlow<RecoveryStep> _recoveryStep
++  recoveryStep
++ <<Create>> CommunicationViewModel(LocalCardsRepository)
++ Boolean validatePassword(String)
++ void clearError()
++ void clearState()
++ void performLogIn(String,String)
++ void performRegistration(User)
++ void performLogout()
++ void deleteUser()
++ void updateUser(User)
++ void syncCards(List<Card>)
++ void verifyEmail(String)
++ void verifyPhone(String)
++ void resendVerificationCodes()
++ void initiateRecovery(String)
++ void sendRecoveryCode(String,String)
++ void resetPassword(String,String,String)
++ void resetRecoveryStep()
+}
+
+
+interface com.example.cards_app.communication.ApiService {
++ Response<User> getUser(String)
++ Response<UserCreationResponse> createUser(User)
++ Response<User> updateUser(String,User)
++ Response<Unit> deleteUser(String)
++ Response<Unit> verifyUser(String,VerificationRequest)
++ Response<String> resendVerificationCodes(String)
++ Response<List<RecoveryOption>> initiateRecovery(RecoveryInitiateRequest)
++ Response<String> sendRecoveryCode(SendRecoveryCodeRequest)
++ Response<String> resetPassword(RecoveryResetRequest)
+}
+
+class com.example.cards_app.models.UserCreationResponse {
++ <<Create>> UserCreationResponse(String,Long,String,String?)
+}
+
+class com.example.cards_app.models.RecoveryInitiateRequest {
++ <<Create>> RecoveryInitiateRequest(String)
+}
+
+class com.example.cards_app.add_card.TemplateCard {
++ <<Create>> TemplateCard(String,String,Int)
+}
+
+class com.example.cards_app.add_card.Templates {
++  list
+}
+
+class com.example.cards_app.account_management.country_code_picker.NumberVisualTransformation {
++  maxLength
++ <<Create>> NumberVisualTransformation(String,Char)
++ TransformedText filter(AnnotatedString)
+}
+
+
+class com.example.cards_app.account_management.country_code_picker.MaskOffsetMapper {
++ <<Create>> MaskOffsetMapper(String,Char)
++ Int originalToTransformed(Int)
++ Int transformedToOriginal(Int)
+}
+
+class com.example.cards_app.account_management.SignUpScreen {
++ void MySignUpScreen(() -> Unit,CommunicationViewModel)
+}
+
+class com.example.cards_app.communication.CommunicationViewModelFactory {
++ <<Create>> CommunicationViewModelFactory(Context)
++ T create(Class<T>)
+}
+
+class com.example.cards_app.account_management.LogInScreen {
++ void MyLogInScreen(() -> Unit,() -> Unit,() -> Unit,CommunicationViewModel)
+}
+
+class com.example.cards_app.MainViewModel {
+-  localCardsRepo
+-  _screenStack
++  screenStack
+-  _cardStack
++  cardStack
+-  _editStack
++  editStack
+-  _isLoading
++  isLoading
++ StateFlow<List<Card>> cards
+-  _settings
++ StateFlow<String?> settingsFlow
++ <<Create>> MainViewModel(Application)
++ void navigateTo(Int,Boolean,Card?)
++ void navigateBack()
++ void deleteCardFromStack(Card?)
++ void replaceScreenOnStack(Int)
++ void addCardAndSave(Card,() -> Unit)
++ void deleteCardByID(String)
++ void overwriteLocalCards(List<Card>)
++ void regenerateCardImage(Card,android.content.Context)
++ void saveSettings(String)
+}
+
+
+class com.example.cards_app.add_card.AddCard {
++ void MyAddCard(MainViewModel,() -> Unit,Card?,() -> Unit)
++ void ColorCircle(Color,Boolean,Boolean,() -> Unit)
++ String toHexString()
++ void ScannerOverlay(Modifier)
+}
+
+class com.example.cards_app.Card {
++ <<Create>> Card(String,String,String,String,Int,String?,String)
+}
+
+enum com.example.cards_app.account_management.RecoveryStep {
++  ENTER_USERNAME
++  CHOOSE_CHANNEL
++  ENTER_CODE_AND_RESET
++  SUCCESS
+}
+
+class com.example.cards_app.SettingsScreen {
++ void MySettingsScreen(String,(String) -> Unit,() -> Unit)
++ void SettingsHeader(String)
+- void SettingsItem(String,String?,ImageVector,() -> Unit)
++ void CreditsDialog(() -> Unit)
+- void CreditItem(String,String,String)
+}
+
+class com.example.cards_app.LocalCardsRepository {
+-  dataStore
++ Flow<List<Card>> cardsFlow
++ <<Create>> LocalCardsRepository(Context)
++ void saveCard(Card)
++ void deleteCardByID(String)
++ void overwriteAll(List<Card>)
+}
+
+
+class com.example.cards_app.models.VerificationRequest {
++ <<Create>> VerificationRequest(String,VerificationType)
+}
+
+class com.example.cards_app.communication.UserRepository {
+-  apiService
++ Response<User> getUser(String,String)
++ void registerUser(User)
++ Response<Unit> deleteUser(String,String)
++ Response<User> updateUser(String,String,User)
++ Response<Unit> verifyUser(String,String,VerificationRequest)
++ Response<String> resendVerificationCodes(String,String)
++ void initiateRecovery(RecoveryInitiateRequest)
++ void sendRecoveryCode(SendRecoveryCodeRequest)
++ void resetPassword(RecoveryResetRequest)
+}
+
+
+class com.example.cards_app.account_management.AccountScreen {
++ void MyAccountScreen(() -> Unit,CommunicationViewModel,MainViewModel)
+- void VerificationCard(String,String?,(String) -> Unit,() -> Unit,Boolean)
+- void UpdateUserCard(User,Boolean,(User) -> Unit,CommunicationViewModel)
+- void SyncCardsCard(User,Boolean,(List<Card>) -> Unit,MainViewModel)
+}
+
+
+
+androidx.activity.ComponentActivity <|-- com.example.cards_app.MainActivity
+com.example.cards_app.AppDataStore +.. com.example.cards_app.AppDataStore$Companion
+androidx.lifecycle.ViewModel <|-- com.example.cards_app.communication.CommunicationViewModel
+androidx.compose.ui.text.input.VisualTransformation <|.. com.example.cards_app.account_management.country_code_picker.NumberVisualTransformation
+androidx.compose.ui.text.input.OffsetMapping <|.. com.example.cards_app.account_management.country_code_picker.MaskOffsetMapper
+com.example.cards_app.communication.Factory <|.. com.example.cards_app.communication.CommunicationViewModelFactory
+androidx.lifecycle.AndroidViewModel <|-- com.example.cards_app.MainViewModel
+@enduml
