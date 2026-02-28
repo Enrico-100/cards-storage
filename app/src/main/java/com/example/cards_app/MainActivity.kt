@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             LaunchedEffect(viewModel.eventChannel) {
                 viewModel.eventChannel.collect { event ->
-                    Toast.makeText(context, event, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, event, Toast.LENGTH_LONG).show()
                 }
             }
 

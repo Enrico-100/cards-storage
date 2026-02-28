@@ -316,7 +316,7 @@ class MyCards {
                                 color = blackOrWhite
                             )
                             Text(
-                                text = "Card name: ${card.nameOfCard}",
+                                text = "Card type: ${card.nameOfCard}",
                                 fontSize = MaterialTheme.typography.bodyLarge.fontSize,
                                 color = blackOrWhite
                             )

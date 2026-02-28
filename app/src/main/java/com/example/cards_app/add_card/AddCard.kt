@@ -307,7 +307,6 @@ class AddCard {
                                                     painter = painterResource(id = template.logoResId),
                                                     contentDescription = "${template.nameOfCard} Logo",
                                                     modifier = Modifier.fillMaxHeight()
-
                                                 )
                                             }
                                         }
@@ -381,7 +380,7 @@ class AddCard {
                                 validationMessage += "Name cannot be empty.\n"
                             }
                             if (nameOfCard.isEmpty()) {
-                                validationMessage += "Name of card cannot be empty.\n"
+                                validationMessage += "Type of card cannot be empty.\n"
                             }
                             showValidationMessage = validationMessage.isNotEmpty()
                             if (showValidationMessage) {

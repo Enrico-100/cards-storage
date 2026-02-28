@@ -12,10 +12,9 @@ object RetrofitClient {
     private const val BASE_URL = "https://enrico.host/"
     // http://10.0.2.2:8080/ is a special IP address that points to the Android emulator's localhost.
     //actual domain is https://enrico.host/
-    // This client will be used to make the network requests.
     private val okHttpClient: OkHttpClient by lazy {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY // Shows full request/response, great for debugging
+            level = HttpLoggingInterceptor.Level.BODY // Shows full request/response
         }
 
         OkHttpClient.Builder()

@@ -60,12 +60,12 @@ class MainViewModel (application: Application) : AndroidViewModel(application) {
 
         if (screen == numberOfScreen && currentCard == cardToEdit && currentEditState == edit) return
 
-        val nextCard = // Case A: You explicitly said "Switch to THIS card"
+        val nextCard =
             cardToEdit
                 ?: if (screen == 3 || (screen == 1 && edit)) {
-                    currentCard // Case B: "Keep looking at the same card"
+                    currentCard
                 } else {
-                    null // Case C: "Forget the card" (Home, Account, Add New)
+                    null
                 }
 
         // Update stacks
