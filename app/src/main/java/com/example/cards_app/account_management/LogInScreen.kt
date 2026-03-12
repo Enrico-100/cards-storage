@@ -121,10 +121,17 @@ class LogInScreen {
                 )
                 Text(
                     text = "Forgot password?",
-                    modifier = Modifier.align(Alignment.End)
-                        .clickable { onForgotPasswordClick() }
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .clickable(enabled = !uiState.isLoading) {
+                            onForgotPasswordClick()
+                        }
                         .padding(top = 8.dp),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = if (!uiState.isLoading) {
+                        MaterialTheme.colorScheme.primary
+                        } else {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.38f)
+                        },
                     fontWeight = FontWeight.SemiBold,
                     textDecoration = TextDecoration.Underline
                 )
