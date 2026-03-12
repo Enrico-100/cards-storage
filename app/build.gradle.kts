@@ -17,7 +17,7 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "2.5"
+        versionName = "2.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -71,6 +71,9 @@ dependencies {
 
     implementation(libs.colorpicker.compose)
     implementation(libs.reorderable)
+
+    implementation(libs.androidx.concurrent.futures)
+    implementation(libs.androidx.concurrent.futures.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
