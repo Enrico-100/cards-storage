@@ -97,8 +97,6 @@ class BarcodeGeneratorAndSaver {
             Barcode.FORMAT_CODE_39 -> BarcodeFormat.CODE_39
             Barcode.FORMAT_CODE_93 -> BarcodeFormat.CODE_93
             Barcode.FORMAT_QR_CODE -> BarcodeFormat.QR_CODE
-            Barcode.FORMAT_AZTEC -> BarcodeFormat.AZTEC
-            Barcode.FORMAT_CODABAR -> BarcodeFormat.CODABAR
             Barcode.FORMAT_DATA_MATRIX -> BarcodeFormat.DATA_MATRIX
             Barcode.FORMAT_EAN_13 -> BarcodeFormat.EAN_13
             Barcode.FORMAT_EAN_8 -> BarcodeFormat.EAN_8
