@@ -7,6 +7,7 @@ import com.example.cards_app.models.User
 import com.example.cards_app.models.VerificationRequest
 import okhttp3.Credentials
 import retrofit2.Response
+import kotlin.text.Charsets.UTF_8
 
 // The repository is the single source of truth for user-related data.
 class UserRepository {
@@ -14,29 +15,29 @@ class UserRepository {
     private val apiService = RetrofitClient.instance
 
     suspend fun getUser(username: String, password: String): Response<User> {
-        val authHeader = Credentials.basic(username, password)
+        val authHeader = Credentials.basic(username, password, UTF_8 )
         return apiService.getUser(authHeader)
     }
 
     suspend fun registerUser(newUser: User) = apiService.createUser(newUser)
 
     suspend fun deleteUser(username: String, password: String): Response<Unit> {
-        val authHeader = Credentials.basic(username, password)
+        val authHeader = Credentials.basic(username, password, UTF_8)
         return apiService.deleteUser(authHeader)
     }
 
     suspend fun updateUser(username: String, password: String, newUser: User): Response<User> {
-        val authHeader = Credentials.basic(username, password)
+        val authHeader = Credentials.basic(username, password, UTF_8)
         return apiService.updateUser(authHeader, newUser)
     }
 
     suspend fun verifyUser(username: String, password: String, verificationRequest: VerificationRequest): Response<Unit> {
-        val authHeader = Credentials.basic(username, password)
+        val authHeader = Credentials.basic(username, password, UTF_8)
         return apiService.verifyUser(authHeader, verificationRequest)
     }
 
     suspend fun resendVerificationCodes(username: String, password: String): Response<String> {
-        val authHeader = Credentials.basic(username, password)
+        val authHeader = Credentials.basic(username, password, UTF_8)
         return apiService.resendVerificationCodes(authHeader)
     }
 
